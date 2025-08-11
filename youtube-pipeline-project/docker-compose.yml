@@ -28,9 +28,16 @@ services:
     image: bitnami/spark:3.5.1
     environment:
       - SPARK_MODE=master
+      - SPARK_WORKER_MEMORY=8G
+      - SPARK_WORKER_CORES=4
     ports:
       - "7077:7077"
       - "8080:8080"
+      - "4040:4040"
+    volumes:
+      - ./app:/app
+      - ./batch:/app/batch
+      - ./data/raw:/app/data/raw
 
   spark-worker:
     image: bitnami/spark:3.5.1
@@ -39,33 +46,55 @@ services:
       - SPARK_MASTER_URL=spark://spark-master:7077
     depends_on:
       - spark-master
+    deploy:
+      replicas: 3
 
-  hdfs-namenode:
+  namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
     environment:
-      - CLUSTER_NAME=hdfs-cluster
+      - CLUSTER_NAME=test
+      - HADOOP_HEAPSIZE=256
     ports:
-      - "9870:9870"
+      - 9870:9870
+      - 9000:9000
     volumes:
       - hdfs_namenode:/hadoop/dfs/name
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
+    env_file:
+      - ./hdfs.env
 
 
-  hdfs-datanode:
+  datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
     environment:
-      - CLUSTER_NAME=hdfs-cluster
+      SERVICE_PRECONDITION: "namenode:9870"
     volumes:
       - hdfs_datanode:/hadoop/dfs/data
     depends_on:
-      - hdfs-namenode
+      - namenode
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
+    env_file:
+      - ./hdfs.env
+
+  batch_ingestion:
+    build: ./batch
+    depends_on:
+      - spark-master
+      - namenode
+    volumes:
+      - ./data/raw:/app/data/raw
+      - ./storage/hdfs/raw:/app/storage/hdfs/raw
+    tty: true
+    stdin_open: true
+
 
   postgres:
     image: postgres:13
@@ -102,6 +131,22 @@ services:
 #            airflow webserver"
 
 
+  cloudera:
+    image: gethue/hue:20201111-135001
+    hostname: hue
+    container_name: hue
+    dns: 8.8.8.8
+    ports:
+      - "8888:8888"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./conf.dist:/usr/share/hue/desktop/conf
+    depends_on: 
+      - namenode
+      
   superset:
     image: apache/superset:3.0.0
     ports:
