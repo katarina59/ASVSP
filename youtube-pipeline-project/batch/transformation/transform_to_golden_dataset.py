@@ -50,7 +50,8 @@ for region in regions:
         col("v.comments_disabled").cast("boolean"),
         col("v.ratings_disabled").cast("boolean"),
         col("v.video_error_or_removed").cast("boolean"),
-        col("v.trending_date") 
+        col("v.trending_date"),
+        col("v.description") 
     ).withColumn(
         "trending_date_fixed",
         concat_ws(".", split_date.getItem(1), split_date.getItem(2), split_date.getItem(0))
