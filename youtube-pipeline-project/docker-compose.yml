@@ -157,7 +157,43 @@ services:
       - postgres
 
 
+  citus_coordinator:
+    image: citusdata/citus:11.3
+    environment:
+      POSTGRES_USER: citus
+      POSTGRES_PASSWORD: citus
+      POSTGRES_DB: youtube_dw
+    ports:
+      - "5433:5432"  # Da ne sudari sa postojećim Postgresom na 5432
+    volumes:
+      - citus_data:/var/lib/postgresql/data
+    command: postgres -c shared_preload_libraries=citus
+
+  citus_worker1:
+    image: citusdata/citus:11.3
+    environment:
+      POSTGRES_USER: citus
+      POSTGRES_PASSWORD: citus
+      POSTGRES_DB: youtube_dw
+    volumes:
+      - citus_worker1_data:/var/lib/postgresql/data
+    command: postgres -c shared_preload_libraries=citus
+
+  citus_worker2:
+    image: citusdata/citus:11.3
+    environment:
+      POSTGRES_USER: citus
+      POSTGRES_PASSWORD: citus
+      POSTGRES_DB: youtube_dw
+    volumes:
+      - citus_worker2_data:/var/lib/postgresql/data
+    command: postgres -c shared_preload_libraries=citus
+
+
 volumes:
   hdfs_namenode:
   hdfs_datanode:
   postgres_data:
+  citus_data:
+  citus_worker1_data:
+  citus_worker2_data:
