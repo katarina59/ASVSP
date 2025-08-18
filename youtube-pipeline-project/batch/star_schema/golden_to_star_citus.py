@@ -1,5 +1,4 @@
 from pyspark.sql import SparkSession # type: ignore
-import psycopg2 # type: ignore
 
 # -----------------------
 # 1️⃣ Spark session

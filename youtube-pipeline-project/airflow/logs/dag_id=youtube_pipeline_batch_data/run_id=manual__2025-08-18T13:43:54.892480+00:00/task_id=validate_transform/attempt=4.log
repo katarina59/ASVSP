@@ -1,0 +1,34 @@
+[2025-08-18T13:57:16.346+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2025-08-18T13:57:16.437+0000] {taskinstance.py:2073} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: youtube_pipeline_batch_data.validate_transform manual__2025-08-18T13:43:54.892480+00:00 [queued]>
+[2025-08-18T13:57:16.456+0000] {taskinstance.py:2073} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: youtube_pipeline_batch_data.validate_transform manual__2025-08-18T13:43:54.892480+00:00 [queued]>
+[2025-08-18T13:57:16.457+0000] {taskinstance.py:2303} INFO - Starting attempt 4 of 4
+[2025-08-18T13:57:16.486+0000] {taskinstance.py:2327} INFO - Executing <Task(BashOperator): validate_transform> on 2025-08-18 13:43:54.892480+00:00
+[2025-08-18T13:57:16.494+0000] {standard_task_runner.py:63} INFO - Started process 5700 to run task
+[2025-08-18T13:57:16.499+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'youtube_pipeline_batch_data', 'validate_transform', 'manual__2025-08-18T13:43:54.892480+00:00', '--job-id', '363', '--raw', '--subdir', 'DAGS_FOLDER/youtube_pipeline.py', '--cfg-path', '/tmp/tmpu6vq3oq_']
+[2025-08-18T13:57:16.504+0000] {standard_task_runner.py:91} INFO - Job 363: Subtask validate_transform
+[2025-08-18T13:57:16.721+0000] {task_command.py:426} INFO - Running <TaskInstance: youtube_pipeline_batch_data.validate_transform manual__2025-08-18T13:43:54.892480+00:00 [running]> on host 47205959681c
+[2025-08-18T13:57:17.153+0000] {taskinstance.py:2644} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='youtube_pipeline_batch_data' AIRFLOW_CTX_TASK_ID='validate_transform' AIRFLOW_CTX_EXECUTION_DATE='2025-08-18T13:43:54.892480+00:00' AIRFLOW_CTX_TRY_NUMBER='4' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-08-18T13:43:54.892480+00:00'
+[2025-08-18T13:57:17.157+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2025-08-18T13:57:17.281+0000] {subprocess.py:63} INFO - Tmp dir root location: /tmp
+[2025-08-18T13:57:17.282+0000] {subprocess.py:75} INFO - Running command: ['/usr/bin/bash', '-c', '\n        ROW_COUNT=$(docker exec namenode hdfs dfs -cat /storage/hdfs/processed/golden_dataset | wc -l)\n        if [ "$ROW_COUNT" -lt 1 ]; then\n            echo "Transform failed: no rows in golden dataset" && exit 1\n        else\n            echo "Transform OK"\n        fi\n        ']
+[2025-08-18T13:57:17.336+0000] {subprocess.py:86} INFO - Output:
+[2025-08-18T13:57:26.701+0000] {subprocess.py:93} INFO - cat: `/storage/hdfs/processed/golden_dataset': Is a directory
+[2025-08-18T13:57:27.495+0000] {subprocess.py:93} INFO - Transform failed: no rows in golden dataset
+[2025-08-18T13:57:27.496+0000] {subprocess.py:97} INFO - Command exited with return code 1
+[2025-08-18T13:57:27.501+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2025-08-18T13:57:27.578+0000] {taskinstance.py:2890} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.9/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+  File "/home/airflow/.local/lib/python3.9/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+  File "/home/airflow/.local/lib/python3.9/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+  File "/home/airflow/.local/lib/python3.9/site-packages/airflow/operators/bash.py", line 243, in execute
+    raise AirflowException(
+airflow.exceptions.AirflowException: Bash command failed. The command returned a non-zero exit code 1.
+[2025-08-18T13:57:27.598+0000] {taskinstance.py:1205} INFO - Marking task as FAILED. dag_id=youtube_pipeline_batch_data, task_id=validate_transform, execution_date=20250818T134354, start_date=20250818T135716, end_date=20250818T135727
+[2025-08-18T13:57:27.707+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 363 for task validate_transform (Bash command failed. The command returned a non-zero exit code 1.; 5700)
+[2025-08-18T13:57:27.807+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2025-08-18T13:57:27.886+0000] {taskinstance.py:3482} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2025-08-18T13:57:27.905+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
