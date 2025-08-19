@@ -26,6 +26,7 @@ services:
 
   spark-master:
     image: bitnami/spark:3.5.1
+    container_name: spark-master
     environment:
       - SPARK_MODE=master
       - SPARK_WORKER_MEMORY=8G
@@ -36,7 +37,6 @@ services:
       - "4040:4040"
     volumes:
       - ./app:/app
-      # - ./batch:/app/batch
       - ./batch:/opt/airflow/jobs
       - ./data/raw:/app/data/raw
 
@@ -87,6 +87,7 @@ services:
 
   batch_ingestion:
     build: ./batch
+    container_name: batch_ingestion
     depends_on:
       - spark-master
       - namenode
@@ -99,6 +100,7 @@ services:
 
   postgres:
     image: postgres:13
+    container_name: postgres
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
@@ -108,6 +110,7 @@ services:
 
   airflow:
     image: apache/airflow:2.9.0-python3.9
+    container_name: airflow
     privileged: true
     user: root 
     environment:
@@ -163,6 +166,7 @@ services:
       
   superset:
     image: apache/superset:3.0.0
+    container_name: superset
     ports:
       - "8088:8088"
     environment:
@@ -173,6 +177,7 @@ services:
 
   citus_coordinator:
     image: citusdata/citus:11.3
+    container_name: citus_coordinator
     environment:
       POSTGRES_USER: citus
       POSTGRES_PASSWORD: citus
@@ -185,6 +190,7 @@ services:
 
   citus_worker1:
     image: citusdata/citus:11.3
+    container_name: citus_worker1
     environment:
       POSTGRES_USER: citus
       POSTGRES_PASSWORD: citus
@@ -195,6 +201,7 @@ services:
 
   citus_worker2:
     image: citusdata/citus:11.3
+    container_name: citus_worker2
     environment:
       POSTGRES_USER: citus
       POSTGRES_PASSWORD: citus

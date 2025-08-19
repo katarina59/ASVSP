@@ -41,11 +41,13 @@ with DAG(
     drop_views = BashOperator(
         task_id="drop_views",
         bash_command=(
-            "PGPASSWORD=citus psql "
-            "-h citus_coordinator "
-            "-U citus "
-            "-d youtube_dw "
-            "-c \"DROP VIEW IF EXISTS avg_views_comments CASCADE; "
+            # "PGPASSWORD=citus psql "
+            # "-h citus_coordinator "
+            # "-U citus "
+            # "-d youtube_dw "
+            "docker exec citus_coordinator "
+            "psql -U citus -d youtube_dw "
+            "-c \"DROP VIEW IF EXISTS vw_q01_avg_views_comments CASCADE; "
             "DROP VIEW IF EXISTS vw_q02_top_engagement_channels CASCADE; "
             "DROP VIEW IF EXISTS vw_q03_gold_combinations CASCADE; "
             "DROP VIEW IF EXISTS vw_q04_problem_types CASCADE; "
@@ -63,7 +65,7 @@ with DAG(
     ingest_raw = BashOperator(
         task_id="ingest_raw",
         bash_command=(
-            "docker exec youtube-pipeline-project_spark-master_1 "
+            "docker exec spark-master "
             "spark-submit "
             "--master spark://spark-master:7077 "
             "--deploy-mode client "
@@ -89,7 +91,7 @@ with DAG(
     transform_golden = BashOperator(
         task_id="transform_golden",
         bash_command=(
-            "docker exec youtube-pipeline-project_spark-master_1 "
+            "docker exec spark-master "
             "spark-submit "
             "--master spark://spark-master:7077 "
             "--deploy-mode client "
@@ -116,7 +118,7 @@ with DAG(
     golden_to_star = BashOperator(
         task_id="golden_to_star",
         bash_command=(
-            "docker exec youtube-pipeline-project_spark-master_1 "
+            "docker exec spark-master "
             "spark-submit "
             "--master spark://spark-master:7077 "
             "--deploy-mode client "

@@ -1,0 +1,98 @@
+[2025-08-19T09:52:33.068+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2025-08-19T09:52:34.258+0000] {taskinstance.py:2073} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: youtube_pipeline_batch_data.run_q_08_desc_thumb_performance manual__2025-08-19T09:11:31.039964+00:00 [queued]>
+[2025-08-19T09:52:34.561+0000] {taskinstance.py:2073} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: youtube_pipeline_batch_data.run_q_08_desc_thumb_performance manual__2025-08-19T09:11:31.039964+00:00 [queued]>
+[2025-08-19T09:52:34.562+0000] {taskinstance.py:2303} INFO - Starting attempt 1 of 4
+[2025-08-19T09:52:35.090+0000] {taskinstance.py:2327} INFO - Executing <Task(BashOperator): run_q_08_desc_thumb_performance> on 2025-08-19 09:11:31.039964+00:00
+[2025-08-19T09:52:35.258+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'youtube_pipeline_batch_data', 'run_q_08_desc_thumb_performance', 'manual__2025-08-19T09:11:31.039964+00:00', '--job-id', '632', '--raw', '--subdir', 'DAGS_FOLDER/youtube_pipeline.py', '--cfg-path', '/tmp/tmpovpd5gul']
+[2025-08-19T09:52:35.268+0000] {standard_task_runner.py:91} INFO - Job 632: Subtask run_q_08_desc_thumb_performance
+[2025-08-19T09:52:35.245+0000] {standard_task_runner.py:63} INFO - Started process 2893 to run task
+[2025-08-19T09:52:35.731+0000] {task_command.py:426} INFO - Running <TaskInstance: youtube_pipeline_batch_data.run_q_08_desc_thumb_performance manual__2025-08-19T09:11:31.039964+00:00 [running]> on host 54bf3a3eaeab
+[2025-08-19T09:52:37.932+0000] {taskinstance.py:2644} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='youtube_pipeline_batch_data' AIRFLOW_CTX_TASK_ID='run_q_08_desc_thumb_performance' AIRFLOW_CTX_EXECUTION_DATE='2025-08-19T09:11:31.039964+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-08-19T09:11:31.039964+00:00'
+[2025-08-19T09:52:37.934+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2025-08-19T09:52:38.335+0000] {subprocess.py:63} INFO - Tmp dir root location: /tmp
+[2025-08-19T09:52:38.336+0000] {subprocess.py:75} INFO - Running command: ['/usr/bin/bash', '-c', 'PGPASSWORD=citus psql -h citus_coordinator -U citus -d youtube_dw -f /opt/***/sql/q_08_desc_thumb_performance.sql']
+[2025-08-19T09:52:38.355+0000] {subprocess.py:86} INFO - Output:
+[2025-08-19T09:52:40.777+0000] {subprocess.py:93} INFO - psql:/opt/***/sql/q_08_desc_thumb_performance.sql:8: ERROR:  syntax error at or near "SET"
+[2025-08-19T09:52:40.779+0000] {subprocess.py:93} INFO - LINE 2: SET max_parallel_workers_per_gather = 0;
+[2025-08-19T09:52:40.781+0000] {subprocess.py:93} INFO -         ^
+[2025-08-19T09:52:40.787+0000] {subprocess.py:93} INFO - SET
+[2025-08-19T09:53:04.611+0000] {subprocess.py:93} INFO -     category_title    | description_length_category | thumbnail_quality | video_count | avg_views | avg_likes | performance_rank | performance_percentile
+[2025-08-19T09:53:04.612+0000] {subprocess.py:93} INFO - ----------------------+-----------------------------+-------------------+-------------+-----------+-----------+------------------+------------------------
+[2025-08-19T09:53:04.612+0000] {subprocess.py:93} INFO -  Autos & Vehicles     | Long                        | Standard Quality  |         805 |    517017 |     12982 |                1 |     0.4927536231884058
+[2025-08-19T09:53:04.612+0000] {subprocess.py:93} INFO -  Autos & Vehicles     | Medium                      | Standard Quality  |        2132 |    448683 |     11204 |                2 |      0.391304347826087
+[2025-08-19T09:53:04.612+0000] {subprocess.py:93} INFO -  Autos & Vehicles     | Very Short                  | Standard Quality  |         419 |    208726 |      2914 |                3 |    0.08695652173913043
+[2025-08-19T09:53:04.613+0000] {subprocess.py:93} INFO -  Autos & Vehicles     | Short                       | Standard Quality  |         732 |    132162 |      6201 |                4 |   0.028985507246376812
+[2025-08-19T09:53:04.614+0000] {subprocess.py:93} INFO -  Autos & Vehicles     | Very Long                   | Standard Quality  |         418 |    107796 |      4180 |                5 |                      0
+[2025-08-19T09:53:04.615+0000] {subprocess.py:93} INFO -  Comedy               | Long                        | Standard Quality  |        5962 |   1233898 |     52774 |                1 |     0.8115942028985508
+[2025-08-19T09:53:04.616+0000] {subprocess.py:93} INFO -  Comedy               | Very Long                   | Standard Quality  |        2225 |    924957 |     34306 |                2 |     0.7391304347826086
+[2025-08-19T09:53:04.616+0000] {subprocess.py:93} INFO -  Comedy               | Medium                      | Standard Quality  |       11499 |    771925 |     45683 |                3 |     0.7101449275362319
+[2025-08-19T09:53:04.616+0000] {subprocess.py:93} INFO -  Comedy               | Short                       | Standard Quality  |        5004 |    561434 |     24562 |                4 |     0.5362318840579711
+[2025-08-19T09:53:04.620+0000] {subprocess.py:93} INFO -  Comedy               | Very Short                  | Standard Quality  |        1894 |    424555 |     17640 |                5 |    0.34782608695652173
+[2025-08-19T09:53:04.622+0000] {subprocess.py:93} INFO -  Education            | Very Long                   | Standard Quality  |        1814 |    499145 |     23809 |                1 |     0.4492753623188406
+[2025-08-19T09:53:04.623+0000] {subprocess.py:93} INFO -  Education            | Long                        | Standard Quality  |        2245 |    396063 |     17603 |                2 |     0.3188405797101449
+[2025-08-19T09:53:04.627+0000] {subprocess.py:93} INFO -  Education            | Medium                      | Standard Quality  |        2387 |    301190 |     10878 |                3 |    0.15942028985507245
+[2025-08-19T09:53:04.631+0000] {subprocess.py:93} INFO -  Education            | Short                       | Standard Quality  |         838 |    170551 |      5696 |                4 |    0.07246376811594203
+[2025-08-19T09:53:04.633+0000] {subprocess.py:93} INFO -  Education            | Very Short                  | Standard Quality  |         454 |    157162 |      8274 |                5 |   0.043478260869565216
+[2025-08-19T09:53:04.634+0000] {subprocess.py:93} INFO -  Entertainment        | Medium                      | Standard Quality  |       44475 |   1224942 |     37631 |                1 |     0.7971014492753623
+[2025-08-19T09:53:04.636+0000] {subprocess.py:93} INFO -  Entertainment        | Long                        | Standard Quality  |       22911 |   1012266 |     26304 |                2 |     0.7536231884057971
+[2025-08-19T09:53:04.638+0000] {subprocess.py:93} INFO -  Entertainment        | Very Long                   | Standard Quality  |       12902 |    779416 |     17609 |                3 |     0.7246376811594203
+[2025-08-19T09:53:04.639+0000] {subprocess.py:93} INFO -  Entertainment        | Short                       | Standard Quality  |       18905 |    634267 |     14978 |                4 |     0.5797101449275363
+[2025-08-19T09:53:04.648+0000] {subprocess.py:93} INFO -  Entertainment        | Very Short                  | Standard Quality  |        8986 |    503352 |      6497 |                5 |     0.4782608695652174
+[2025-08-19T09:53:04.649+0000] {subprocess.py:93} INFO -  Film & Animation     | Long                        | Standard Quality  |        4749 |   2260236 |     46779 |                1 |      0.927536231884058
+[2025-08-19T09:53:04.652+0000] {subprocess.py:93} INFO -  Film & Animation     | Medium                      | Standard Quality  |        7981 |   1548021 |     31595 |                2 |     0.8695652173913043
+[2025-08-19T09:53:04.652+0000] {subprocess.py:93} INFO -  Film & Animation     | Short                       | Standard Quality  |        3260 |    693024 |     15608 |                3 |     0.6666666666666666
+[2025-08-19T09:53:04.652+0000] {subprocess.py:93} INFO -  Film & Animation     | Very Long                   | Standard Quality  |        2436 |    499875 |     14836 |                4 |      0.463768115942029
+[2025-08-19T09:53:04.653+0000] {subprocess.py:93} INFO -  Film & Animation     | Very Short                  | Standard Quality  |        2127 |    456020 |     12147 |                5 |     0.4057971014492754
+[2025-08-19T09:53:04.658+0000] {subprocess.py:93} INFO -  Gaming               | Very Long                   | Standard Quality  |        1221 |   1109134 |     23752 |                1 |      0.782608695652174
+[2025-08-19T09:53:04.659+0000] {subprocess.py:93} INFO -  Gaming               | Short                       | Standard Quality  |        1815 |    698444 |     34265 |                2 |     0.6811594202898551
+[2025-08-19T09:53:04.659+0000] {subprocess.py:93} INFO -  Gaming               | Long                        | Standard Quality  |        1949 |    654396 |     24383 |                3 |     0.6521739130434783
+[2025-08-19T09:53:04.659+0000] {subprocess.py:93} INFO -  Gaming               | Medium                      | Standard Quality  |        5437 |    635069 |     26348 |                4 |     0.6086956521739131
+[2025-08-19T09:53:04.660+0000] {subprocess.py:93} INFO -  Gaming               | Very Short                  | Standard Quality  |         977 |    351695 |     15092 |                5 |     0.2753623188405797
+[2025-08-19T09:53:04.660+0000] {subprocess.py:93} INFO -  Howto & Style        | Medium                      | Standard Quality  |        6145 |    635945 |     17428 |                1 |     0.6231884057971014
+[2025-08-19T09:53:04.660+0000] {subprocess.py:93} INFO -  Howto & Style        | Long                        | Standard Quality  |        6151 |    493888 |     24233 |                2 |    0.43478260869565216
+[2025-08-19T09:53:04.661+0000] {subprocess.py:93} INFO -  Howto & Style        | Very Long                   | Standard Quality  |        4476 |    481559 |     15080 |                3 |    0.42028985507246375
+[2025-08-19T09:53:04.666+0000] {subprocess.py:93} INFO -  Howto & Style        | Short                       | Standard Quality  |        1425 |    396776 |     14540 |                4 |     0.3333333333333333
+[2025-08-19T09:53:04.667+0000] {subprocess.py:93} INFO -  Howto & Style        | Very Short                  | Standard Quality  |         420 |    116514 |      2670 |                5 |   0.014492753623188406
+[2025-08-19T09:53:04.667+0000] {subprocess.py:93} INFO -  Music                | Short                       | Standard Quality  |        7020 |   7187012 |    172363 |                1 |                      1
+[2025-08-19T09:53:04.667+0000] {subprocess.py:93} INFO -  Music                | Medium                      | Standard Quality  |       20200 |   6751223 |    206977 |                2 |     0.9855072463768116
+[2025-08-19T09:53:04.668+0000] {subprocess.py:93} INFO -  Music                | Very Short                  | Standard Quality  |        2475 |   5046004 |     89517 |                3 |     0.9710144927536232
+[2025-08-19T09:53:04.668+0000] {subprocess.py:93} INFO -  Music                | Long                        | Standard Quality  |        7719 |   4609408 |    138476 |                4 |     0.9565217391304348
+[2025-08-19T09:53:04.668+0000] {subprocess.py:93} INFO -  Music                | Very Long                   | Standard Quality  |        4822 |   4313272 |    108761 |                5 |     0.9420289855072463
+[2025-08-19T09:53:04.669+0000] {subprocess.py:93} INFO -  News & Politics      | Medium                      | Standard Quality  |       13186 |    345765 |      5991 |                1 |     0.2608695652173913
+[2025-08-19T09:53:04.669+0000] {subprocess.py:93} INFO -  News & Politics      | Long                        | Standard Quality  |        5166 |    311854 |      5314 |                2 |    0.17391304347826086
+[2025-08-19T09:53:04.669+0000] {subprocess.py:93} INFO -  News & Politics      | Short                       | Standard Quality  |        8882 |    268607 |      3093 |                3 |    0.13043478260869565
+[2025-08-19T09:53:04.670+0000] {subprocess.py:93} INFO -  News & Politics      | Very Long                   | Standard Quality  |        4372 |    229958 |      4700 |                4 |    0.10144927536231885
+[2025-08-19T09:53:04.670+0000] {subprocess.py:93} INFO -  News & Politics      | Very Short                  | Standard Quality  |        5105 |    157355 |      1544 |                5 |   0.057971014492753624
+[2025-08-19T09:53:04.671+0000] {subprocess.py:93} INFO -  People & Blogs       | Long                        | Standard Quality  |        7097 |    650564 |     21493 |                1 |     0.6376811594202898
+[2025-08-19T09:53:04.672+0000] {subprocess.py:93} INFO -  People & Blogs       | Very Short                  | Standard Quality  |        9753 |    554340 |      3280 |                2 |     0.5217391304347826
+[2025-08-19T09:53:04.672+0000] {subprocess.py:93} INFO -  People & Blogs       | Medium                      | Standard Quality  |       14855 |    435281 |     17971 |                3 |    0.36231884057971014
+[2025-08-19T09:53:04.672+0000] {subprocess.py:93} INFO -  People & Blogs       | Very Long                   | Standard Quality  |       11225 |    325481 |     11194 |                4 |    0.21739130434782608
+[2025-08-19T09:53:04.673+0000] {subprocess.py:93} INFO -  People & Blogs       | Short                       | Standard Quality  |       10216 |    321762 |     10320 |                5 |    0.18840579710144928
+[2025-08-19T09:53:04.678+0000] {subprocess.py:93} INFO -  Pets & Animals       | Very Long                   | Standard Quality  |         659 |    728704 |     23034 |                1 |     0.6956521739130435
+[2025-08-19T09:53:04.679+0000] {subprocess.py:93} INFO -  Pets & Animals       | Long                        | Standard Quality  |         773 |    634152 |     16040 |                2 |     0.5652173913043478
+[2025-08-19T09:53:04.681+0000] {subprocess.py:93} INFO -  Pets & Animals       | Very Short                  | Standard Quality  |         652 |    363366 |      5529 |                3 |    0.30434782608695654
+[2025-08-19T09:53:04.681+0000] {subprocess.py:93} INFO -  Pets & Animals       | Short                       | Standard Quality  |        1129 |    326088 |      8957 |                4 |     0.2318840579710145
+[2025-08-19T09:53:04.682+0000] {subprocess.py:93} INFO -  Pets & Animals       | Medium                      | Standard Quality  |        1570 |    271925 |      9572 |                5 |    0.14492753623188406
+[2025-08-19T09:53:04.684+0000] {subprocess.py:93} INFO -  Science & Technology | Very Short                  | Standard Quality  |         307 |   1823453 |     32866 |                1 |     0.8985507246376812
+[2025-08-19T09:53:04.685+0000] {subprocess.py:93} INFO -  Science & Technology | Long                        | Standard Quality  |        2001 |   1767235 |     45154 |                2 |     0.8840579710144928
+[2025-08-19T09:53:04.685+0000] {subprocess.py:93} INFO -  Science & Technology | Very Long                   | Standard Quality  |        1068 |   1409978 |     36762 |                3 |      0.855072463768116
+[2025-08-19T09:53:04.685+0000] {subprocess.py:93} INFO -  Science & Technology | Short                       | Standard Quality  |         893 |   1312958 |     19112 |                4 |     0.8260869565217391
+[2025-08-19T09:53:04.686+0000] {subprocess.py:93} INFO -  Science & Technology | Medium                      | Standard Quality  |        3762 |    634676 |     24837 |                5 |     0.5942028985507246
+[2025-08-19T09:53:04.686+0000] {subprocess.py:93} INFO -  Sports               | Very Long                   | Standard Quality  |        2955 |   1923998 |     59544 |                1 |     0.9130434782608695
+[2025-08-19T09:53:04.686+0000] {subprocess.py:93} INFO -  Sports               | Long                        | Standard Quality  |        3197 |   1407782 |     14176 |                2 |     0.8405797101449275
+[2025-08-19T09:53:04.687+0000] {subprocess.py:93} INFO -  Sports               | Short                       | Standard Quality  |        5492 |    596199 |      7797 |                3 |     0.5507246376811594
+[2025-08-19T09:53:04.688+0000] {subprocess.py:93} INFO -  Sports               | Medium                      | Standard Quality  |        9054 |    530197 |     14259 |                4 |     0.5072463768115942
+[2025-08-19T09:53:04.688+0000] {subprocess.py:93} INFO -  Sports               | Very Short                  | Standard Quality  |        2682 |    244389 |      1511 |                5 |    0.11594202898550725
+[2025-08-19T09:53:04.689+0000] {subprocess.py:93} INFO -  Travel & Events      | Very Short                  | Standard Quality  |          91 |   1097170 |      1579 |                1 |     0.7681159420289855
+[2025-08-19T09:53:04.692+0000] {subprocess.py:93} INFO -  Travel & Events      | Medium                      | Standard Quality  |         601 |    445428 |      6050 |                2 |    0.37681159420289856
+[2025-08-19T09:53:04.692+0000] {subprocess.py:93} INFO -  Travel & Events      | Short                       | Standard Quality  |         195 |    362006 |      4884 |                3 |     0.2898550724637681
+[2025-08-19T09:53:04.694+0000] {subprocess.py:93} INFO -  Travel & Events      | Long                        | Standard Quality  |         386 |    339230 |     10853 |                4 |     0.2463768115942029
+[2025-08-19T09:53:04.696+0000] {subprocess.py:93} INFO -  Travel & Events      | Very Long                   | Standard Quality  |         474 |    324758 |      8951 |                5 |     0.2028985507246377
+[2025-08-19T09:53:04.697+0000] {subprocess.py:93} INFO - (70 rows)
+[2025-08-19T09:53:04.698+0000] {subprocess.py:93} INFO - 
+[2025-08-19T09:53:04.700+0000] {subprocess.py:97} INFO - Command exited with return code 0
+[2025-08-19T09:53:04.701+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2025-08-19T09:53:04.779+0000] {taskinstance.py:1205} INFO - Marking task as SUCCESS. dag_id=youtube_pipeline_batch_data, task_id=run_q_08_desc_thumb_performance, execution_date=20250819T091131, start_date=20250819T095234, end_date=20250819T095304
+[2025-08-19T09:53:04.853+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2025-08-19T09:53:05.009+0000] {taskinstance.py:3482} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2025-08-19T09:53:05.020+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

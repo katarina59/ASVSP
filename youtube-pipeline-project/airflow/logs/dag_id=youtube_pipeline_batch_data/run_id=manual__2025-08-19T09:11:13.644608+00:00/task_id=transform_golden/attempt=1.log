@@ -1,0 +1,168 @@
+[2025-08-19T09:18:54.684+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2025-08-19T09:18:54.742+0000] {taskinstance.py:2073} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: youtube_pipeline_batch_data.transform_golden manual__2025-08-19T09:11:13.644608+00:00 [queued]>
+[2025-08-19T09:18:54.761+0000] {taskinstance.py:2073} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: youtube_pipeline_batch_data.transform_golden manual__2025-08-19T09:11:13.644608+00:00 [queued]>
+[2025-08-19T09:18:54.761+0000] {taskinstance.py:2303} INFO - Starting attempt 1 of 4
+[2025-08-19T09:18:54.789+0000] {taskinstance.py:2327} INFO - Executing <Task(BashOperator): transform_golden> on 2025-08-19 09:11:13.644608+00:00
+[2025-08-19T09:18:54.802+0000] {standard_task_runner.py:63} INFO - Started process 2257 to run task
+[2025-08-19T09:18:54.810+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'youtube_pipeline_batch_data', 'transform_golden', 'manual__2025-08-19T09:11:13.644608+00:00', '--job-id', '599', '--raw', '--subdir', 'DAGS_FOLDER/youtube_pipeline.py', '--cfg-path', '/tmp/tmpr8kxaf24']
+[2025-08-19T09:18:54.814+0000] {standard_task_runner.py:91} INFO - Job 599: Subtask transform_golden
+[2025-08-19T09:18:54.922+0000] {task_command.py:426} INFO - Running <TaskInstance: youtube_pipeline_batch_data.transform_golden manual__2025-08-19T09:11:13.644608+00:00 [running]> on host 54bf3a3eaeab
+[2025-08-19T09:18:55.097+0000] {taskinstance.py:2644} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='youtube_pipeline_batch_data' AIRFLOW_CTX_TASK_ID='transform_golden' AIRFLOW_CTX_EXECUTION_DATE='2025-08-19T09:11:13.644608+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-08-19T09:11:13.644608+00:00'
+[2025-08-19T09:18:55.098+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2025-08-19T09:18:55.133+0000] {subprocess.py:63} INFO - Tmp dir root location: /tmp
+[2025-08-19T09:18:55.135+0000] {subprocess.py:75} INFO - Running command: ['/usr/bin/bash', '-c', 'docker exec spark-master spark-submit --master spark://spark-master:7077 --deploy-mode client --packages org.apache.spark:spark-avro_2.12:3.5.1 /opt/***/jobs/transformation/transform_to_golden_dataset.py']
+[2025-08-19T09:18:55.157+0000] {subprocess.py:86} INFO - Output:
+[2025-08-19T09:19:03.546+0000] {subprocess.py:93} INFO - :: loading settings :: url = jar:file:/opt/bitnami/spark/jars/ivy-2.5.1.jar!/org/apache/ivy/core/settings/ivysettings.xml
+[2025-08-19T09:19:03.842+0000] {subprocess.py:93} INFO - Ivy Default Cache set to: /opt/bitnami/spark/.ivy2/cache
+[2025-08-19T09:19:03.844+0000] {subprocess.py:93} INFO - The jars for the packages stored in: /opt/bitnami/spark/.ivy2/jars
+[2025-08-19T09:19:03.854+0000] {subprocess.py:93} INFO - org.apache.spark#spark-avro_2.12 added as a dependency
+[2025-08-19T09:19:03.857+0000] {subprocess.py:93} INFO - :: resolving dependencies :: org.apache.spark#spark-submit-parent-96e47dea-47bd-49fb-8e50-4254643ec186;1.0
+[2025-08-19T09:19:03.858+0000] {subprocess.py:93} INFO - 	confs: [default]
+[2025-08-19T09:19:05.305+0000] {subprocess.py:93} INFO - 	found org.apache.spark#spark-avro_2.12;3.5.1 in central
+[2025-08-19T09:19:05.361+0000] {subprocess.py:93} INFO - 	found org.tukaani#xz;1.9 in central
+[2025-08-19T09:19:05.399+0000] {subprocess.py:93} INFO - :: resolution report :: resolve 1529ms :: artifacts dl 11ms
+[2025-08-19T09:19:05.404+0000] {subprocess.py:93} INFO - 	:: modules in use:
+[2025-08-19T09:19:05.407+0000] {subprocess.py:93} INFO - 	org.apache.spark#spark-avro_2.12;3.5.1 from central in [default]
+[2025-08-19T09:19:05.408+0000] {subprocess.py:93} INFO - 	org.tukaani#xz;1.9 from central in [default]
+[2025-08-19T09:19:05.408+0000] {subprocess.py:93} INFO - 	---------------------------------------------------------------------
+[2025-08-19T09:19:05.409+0000] {subprocess.py:93} INFO - 	|                  |            modules            ||   artifacts   |
+[2025-08-19T09:19:05.417+0000] {subprocess.py:93} INFO - 	|       conf       | number| search|dwnlded|evicted|| number|dwnlded|
+[2025-08-19T09:19:05.425+0000] {subprocess.py:93} INFO - 	---------------------------------------------------------------------
+[2025-08-19T09:19:05.426+0000] {subprocess.py:93} INFO - 	|      default     |   2   |   0   |   0   |   0   ||   2   |   0   |
+[2025-08-19T09:19:05.427+0000] {subprocess.py:93} INFO - 	---------------------------------------------------------------------
+[2025-08-19T09:19:05.437+0000] {subprocess.py:93} INFO - :: retrieving :: org.apache.spark#spark-submit-parent-96e47dea-47bd-49fb-8e50-4254643ec186
+[2025-08-19T09:19:05.442+0000] {subprocess.py:93} INFO - 	confs: [default]
+[2025-08-19T09:19:05.445+0000] {subprocess.py:93} INFO - 	0 artifacts copied, 2 already retrieved (0kB/10ms)
+[2025-08-19T09:19:07.110+0000] {subprocess.py:93} INFO - 25/08/19 09:19:07 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+[2025-08-19T09:19:13.430+0000] {subprocess.py:93} INFO - 25/08/19 09:19:13 INFO SparkContext: Running Spark version 3.5.1
+[2025-08-19T09:19:13.437+0000] {subprocess.py:93} INFO - 25/08/19 09:19:13 INFO SparkContext: OS info Linux, 6.11.0-29-generic, amd64
+[2025-08-19T09:19:13.456+0000] {subprocess.py:93} INFO - 25/08/19 09:19:13 INFO SparkContext: Java version 17.0.12
+[2025-08-19T09:19:13.789+0000] {subprocess.py:93} INFO - 25/08/19 09:19:13 INFO ResourceUtils: ==============================================================
+[2025-08-19T09:19:13.820+0000] {subprocess.py:93} INFO - 25/08/19 09:19:13 INFO ResourceUtils: No custom resources configured for spark.driver.
+[2025-08-19T09:19:13.821+0000] {subprocess.py:93} INFO - 25/08/19 09:19:13 INFO ResourceUtils: ==============================================================
+[2025-08-19T09:19:13.838+0000] {subprocess.py:93} INFO - 25/08/19 09:19:13 INFO SparkContext: Submitted application: Processed Zone - Golden Dataset
+[2025-08-19T09:19:14.412+0000] {subprocess.py:93} INFO - 25/08/19 09:19:14 INFO ResourceProfile: Default ResourceProfile created, executor resources: Map(memory -> name: memory, amount: 1024, script: , vendor: , offHeap -> name: offHeap, amount: 0, script: , vendor: ), task resources: Map(cpus -> name: cpus, amount: 1.0)
+[2025-08-19T09:19:14.524+0000] {subprocess.py:93} INFO - 25/08/19 09:19:14 INFO ResourceProfile: Limiting resource is cpu
+[2025-08-19T09:19:14.547+0000] {subprocess.py:93} INFO - 25/08/19 09:19:14 INFO ResourceProfileManager: Added ResourceProfile id: 0
+[2025-08-19T09:19:14.986+0000] {subprocess.py:93} INFO - 25/08/19 09:19:14 INFO SecurityManager: Changing view acls to: spark
+[2025-08-19T09:19:14.988+0000] {subprocess.py:93} INFO - 25/08/19 09:19:14 INFO SecurityManager: Changing modify acls to: spark
+[2025-08-19T09:19:14.991+0000] {subprocess.py:93} INFO - 25/08/19 09:19:14 INFO SecurityManager: Changing view acls groups to:
+[2025-08-19T09:19:15.002+0000] {subprocess.py:93} INFO - 25/08/19 09:19:14 INFO SecurityManager: Changing modify acls groups to:
+[2025-08-19T09:19:15.006+0000] {subprocess.py:93} INFO - 25/08/19 09:19:15 INFO SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: spark; groups with view permissions: EMPTY; users with modify permissions: spark; groups with modify permissions: EMPTY
+[2025-08-19T09:19:16.926+0000] {subprocess.py:93} INFO - 25/08/19 09:19:16 INFO Utils: Successfully started service 'sparkDriver' on port 45913.
+[2025-08-19T09:19:17.042+0000] {subprocess.py:93} INFO - 25/08/19 09:19:17 INFO SparkEnv: Registering MapOutputTracker
+[2025-08-19T09:19:17.391+0000] {subprocess.py:93} INFO - 25/08/19 09:19:17 INFO SparkEnv: Registering BlockManagerMaster
+[2025-08-19T09:19:17.531+0000] {subprocess.py:93} INFO - 25/08/19 09:19:17 INFO BlockManagerMasterEndpoint: Using org.apache.spark.storage.DefaultTopologyMapper for getting topology information
+[2025-08-19T09:19:17.539+0000] {subprocess.py:93} INFO - 25/08/19 09:19:17 INFO BlockManagerMasterEndpoint: BlockManagerMasterEndpoint up
+[2025-08-19T09:19:17.582+0000] {subprocess.py:93} INFO - 25/08/19 09:19:17 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+[2025-08-19T09:19:17.669+0000] {subprocess.py:93} INFO - 25/08/19 09:19:17 INFO DiskBlockManager: Created local directory at /tmp/blockmgr-d25eea37-bdd5-41c9-adb2-4c830dc1b696
+[2025-08-19T09:19:17.741+0000] {subprocess.py:93} INFO - 25/08/19 09:19:17 INFO MemoryStore: MemoryStore started with capacity 434.4 MiB
+[2025-08-19T09:19:17.814+0000] {subprocess.py:93} INFO - 25/08/19 09:19:17 INFO SparkEnv: Registering OutputCommitCoordinator
+[2025-08-19T09:19:19.166+0000] {subprocess.py:93} INFO - 25/08/19 09:19:19 INFO JettyUtils: Start Jetty 0.0.0.0:4040 for SparkUI
+[2025-08-19T09:19:19.583+0000] {subprocess.py:93} INFO - 25/08/19 09:19:19 WARN Utils: Service 'SparkUI' could not bind on port 4040. Attempting port 4041.
+[2025-08-19T09:19:19.655+0000] {subprocess.py:93} INFO - 25/08/19 09:19:19 INFO Utils: Successfully started service 'SparkUI' on port 4041.
+[2025-08-19T09:19:19.862+0000] {subprocess.py:93} INFO - 25/08/19 09:19:19 INFO SparkContext: Added JAR file:///opt/bitnami/spark/.ivy2/jars/org.apache.spark_spark-avro_2.12-3.5.1.jar at spark://b208641feb52:45913/jars/org.apache.spark_spark-avro_2.12-3.5.1.jar with timestamp 1755595153374
+[2025-08-19T09:19:19.863+0000] {subprocess.py:93} INFO - 25/08/19 09:19:19 INFO SparkContext: Added JAR file:///opt/bitnami/spark/.ivy2/jars/org.tukaani_xz-1.9.jar at spark://b208641feb52:45913/jars/org.tukaani_xz-1.9.jar with timestamp 1755595153374
+[2025-08-19T09:19:19.908+0000] {subprocess.py:93} INFO - 25/08/19 09:19:19 INFO SparkContext: Added file file:///opt/bitnami/spark/.ivy2/jars/org.apache.spark_spark-avro_2.12-3.5.1.jar at spark://b208641feb52:45913/files/org.apache.spark_spark-avro_2.12-3.5.1.jar with timestamp 1755595153374
+[2025-08-19T09:19:19.913+0000] {subprocess.py:93} INFO - 25/08/19 09:19:19 INFO Utils: Copying /opt/bitnami/spark/.ivy2/jars/org.apache.spark_spark-avro_2.12-3.5.1.jar to /tmp/spark-7412dde6-8cca-4690-a328-7f95a5f59292/userFiles-ba07f7b4-9edf-43e6-962d-ee83a7a2c72e/org.apache.spark_spark-avro_2.12-3.5.1.jar
+[2025-08-19T09:19:19.977+0000] {subprocess.py:93} INFO - 25/08/19 09:19:19 INFO SparkContext: Added file file:///opt/bitnami/spark/.ivy2/jars/org.tukaani_xz-1.9.jar at spark://b208641feb52:45913/files/org.tukaani_xz-1.9.jar with timestamp 1755595153374
+[2025-08-19T09:19:19.980+0000] {subprocess.py:93} INFO - 25/08/19 09:19:19 INFO Utils: Copying /opt/bitnami/spark/.ivy2/jars/org.tukaani_xz-1.9.jar to /tmp/spark-7412dde6-8cca-4690-a328-7f95a5f59292/userFiles-ba07f7b4-9edf-43e6-962d-ee83a7a2c72e/org.tukaani_xz-1.9.jar
+[2025-08-19T09:19:20.878+0000] {subprocess.py:93} INFO - 25/08/19 09:19:20 INFO StandaloneAppClient$ClientEndpoint: Connecting to master spark://spark-master:7077...
+[2025-08-19T09:19:21.280+0000] {subprocess.py:93} INFO - 25/08/19 09:19:21 INFO TransportClientFactory: Successfully created connection to spark-master/172.18.0.4:7077 after 277 ms (0 ms spent in bootstraps)
+[2025-08-19T09:19:21.928+0000] {subprocess.py:93} INFO - 25/08/19 09:19:21 INFO StandaloneSchedulerBackend: Connected to Spark cluster with app ID app-20250819091921-0007
+[2025-08-19T09:19:22.022+0000] {subprocess.py:93} INFO - 25/08/19 09:19:22 INFO Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 43389.
+[2025-08-19T09:19:22.026+0000] {subprocess.py:93} INFO - 25/08/19 09:19:22 INFO NettyBlockTransferService: Server created on b208641feb52:43389
+[2025-08-19T09:19:22.037+0000] {subprocess.py:93} INFO - 25/08/19 09:19:22 INFO BlockManager: Using org.apache.spark.storage.RandomBlockReplicationPolicy for block replication policy
+[2025-08-19T09:19:22.056+0000] {subprocess.py:93} INFO - 25/08/19 09:19:22 INFO BlockManagerMaster: Registering BlockManager BlockManagerId(driver, b208641feb52, 43389, None)
+[2025-08-19T09:19:22.076+0000] {subprocess.py:93} INFO - 25/08/19 09:19:22 INFO BlockManagerMasterEndpoint: Registering block manager b208641feb52:43389 with 434.4 MiB RAM, BlockManagerId(driver, b208641feb52, 43389, None)
+[2025-08-19T09:19:22.085+0000] {subprocess.py:93} INFO - 25/08/19 09:19:22 INFO BlockManagerMaster: Registered BlockManager BlockManagerId(driver, b208641feb52, 43389, None)
+[2025-08-19T09:19:22.090+0000] {subprocess.py:93} INFO - 25/08/19 09:19:22 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, b208641feb52, 43389, None)
+[2025-08-19T09:19:22.608+0000] {subprocess.py:93} INFO - 25/08/19 09:19:22 INFO StandaloneSchedulerBackend: SchedulerBackend is ready for scheduling beginning after reached minRegisteredResourcesRatio: 0.0
+[2025-08-19T09:19:23.113+0000] {subprocess.py:93} INFO - 25/08/19 09:19:23 INFO SharedState: Setting hive.metastore.warehouse.dir ('null') to the value of spark.sql.warehouse.dir.
+[2025-08-19T09:19:23.134+0000] {subprocess.py:93} INFO - 25/08/19 09:19:23 INFO SharedState: Warehouse path is 'file:/opt/bitnami/spark/spark-warehouse'.
+[2025-08-19T09:19:32.654+0000] {subprocess.py:93} INFO - 25/08/19 09:19:32 INFO InMemoryFileIndex: It took 624 ms to list leaf files for 1 paths.
+[2025-08-19T09:19:39.270+0000] {subprocess.py:93} INFO - 25/08/19 09:19:39 INFO InMemoryFileIndex: It took 213 ms to list leaf files for 1 paths.
+[2025-08-19T09:19:49.258+0000] {subprocess.py:93} INFO - 25/08/19 09:19:49 INFO InMemoryFileIndex: It took 180 ms to list leaf files for 1 paths.
+[2025-08-19T09:19:50.003+0000] {subprocess.py:93} INFO - 25/08/19 09:19:50 INFO InMemoryFileIndex: It took 110 ms to list leaf files for 1 paths.
+[2025-08-19T09:19:52.646+0000] {subprocess.py:93} INFO - 25/08/19 09:19:52 INFO InMemoryFileIndex: It took 16 ms to list leaf files for 1 paths.
+[2025-08-19T09:19:52.721+0000] {subprocess.py:93} INFO - 25/08/19 09:19:52 INFO InMemoryFileIndex: It took 12 ms to list leaf files for 1 paths.
+[2025-08-19T09:19:55.480+0000] {subprocess.py:93} INFO - 25/08/19 09:19:55 INFO InMemoryFileIndex: It took 45 ms to list leaf files for 1 paths.
+[2025-08-19T09:19:56.266+0000] {subprocess.py:93} INFO - 25/08/19 09:19:56 INFO InMemoryFileIndex: It took 233 ms to list leaf files for 1 paths.
+[2025-08-19T09:19:58.776+0000] {subprocess.py:93} INFO - 25/08/19 09:19:58 INFO InMemoryFileIndex: It took 17 ms to list leaf files for 1 paths.
+[2025-08-19T09:19:58.935+0000] {subprocess.py:93} INFO - 25/08/19 09:19:58 INFO InMemoryFileIndex: It took 40 ms to list leaf files for 1 paths.
+[2025-08-19T09:20:02.463+0000] {subprocess.py:93} INFO - 25/08/19 09:20:02 INFO InMemoryFileIndex: It took 18 ms to list leaf files for 1 paths.
+[2025-08-19T09:20:02.563+0000] {subprocess.py:93} INFO - 25/08/19 09:20:02 INFO InMemoryFileIndex: It took 14 ms to list leaf files for 1 paths.
+[2025-08-19T09:20:04.803+0000] {subprocess.py:93} INFO - 25/08/19 09:20:04 INFO InMemoryFileIndex: It took 78 ms to list leaf files for 1 paths.
+[2025-08-19T09:20:05.146+0000] {subprocess.py:93} INFO - 25/08/19 09:20:05 INFO InMemoryFileIndex: It took 64 ms to list leaf files for 1 paths.
+[2025-08-19T09:20:06.603+0000] {subprocess.py:93} INFO - 25/08/19 09:20:06 INFO InMemoryFileIndex: It took 21 ms to list leaf files for 1 paths.
+[2025-08-19T09:20:06.837+0000] {subprocess.py:93} INFO - 25/08/19 09:20:06 INFO InMemoryFileIndex: It took 49 ms to list leaf files for 1 paths.
+[2025-08-19T09:20:08.374+0000] {subprocess.py:93} INFO - 25/08/19 09:20:08 INFO InMemoryFileIndex: It took 32 ms to list leaf files for 1 paths.
+[2025-08-19T09:20:08.706+0000] {subprocess.py:93} INFO - Traceback (most recent call last):
+[2025-08-19T09:20:08.707+0000] {subprocess.py:93} INFO -   File "/opt/***/jobs/transformation/transform_to_golden_dataset.py", line 22, in <module>
+[2025-08-19T09:20:08.708+0000] {subprocess.py:93} INFO -     videos_df = spark.read.format("avro").load(f"hdfs://namenode:9000/storage/hdfs/raw/avro/{region}videos")
+[2025-08-19T09:20:08.708+0000] {subprocess.py:93} INFO -                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2025-08-19T09:20:08.709+0000] {subprocess.py:93} INFO -   File "/opt/bitnami/spark/python/lib/pyspark.zip/pyspark/sql/readwriter.py", line 307, in load
+[2025-08-19T09:20:08.723+0000] {subprocess.py:93} INFO -   File "/opt/bitnami/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1322, in __call__
+[2025-08-19T09:20:08.729+0000] {subprocess.py:93} INFO -   File "/opt/bitnami/spark/python/lib/pyspark.zip/pyspark/errors/exceptions/captured.py", line 179, in deco
+[2025-08-19T09:20:08.730+0000] {subprocess.py:93} INFO -   File "/opt/bitnami/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/protocol.py", line 326, in get_return_value
+[2025-08-19T09:20:08.731+0000] {subprocess.py:93} INFO - py4j.protocol.Py4JJavaError: An error occurred while calling o1573.load.
+[2025-08-19T09:20:08.738+0000] {subprocess.py:93} INFO - : java.io.FileNotFoundException: No Avro files found. If files don't have .avro extension, set ignoreExtension to true
+[2025-08-19T09:20:08.740+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.avro.AvroUtils$.inferAvroSchemaFromFiles(AvroUtils.scala:166)
+[2025-08-19T09:20:08.741+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.avro.AvroUtils$.$anonfun$inferSchema$2(AvroUtils.scala:61)
+[2025-08-19T09:20:08.741+0000] {subprocess.py:93} INFO - 	at scala.Option.getOrElse(Option.scala:189)
+[2025-08-19T09:20:08.742+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.avro.AvroUtils$.inferSchema(AvroUtils.scala:60)
+[2025-08-19T09:20:08.753+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.avro.AvroFileFormat.inferSchema(AvroFileFormat.scala:58)
+[2025-08-19T09:20:08.759+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.execution.datasources.DataSource.$anonfun$getOrInferFileFormatSchema$11(DataSource.scala:208)
+[2025-08-19T09:20:08.766+0000] {subprocess.py:93} INFO - 	at scala.Option.orElse(Option.scala:447)
+[2025-08-19T09:20:08.772+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.execution.datasources.DataSource.getOrInferFileFormatSchema(DataSource.scala:205)
+[2025-08-19T09:20:08.772+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.execution.datasources.DataSource.resolveRelation(DataSource.scala:407)
+[2025-08-19T09:20:08.774+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.DataFrameReader.loadV1Source(DataFrameReader.scala:229)
+[2025-08-19T09:20:08.778+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.DataFrameReader.$anonfun$load$2(DataFrameReader.scala:211)
+[2025-08-19T09:20:08.784+0000] {subprocess.py:93} INFO - 	at scala.Option.getOrElse(Option.scala:189)
+[2025-08-19T09:20:08.784+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:211)
+[2025-08-19T09:20:08.784+0000] {subprocess.py:93} INFO - 	at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:186)
+[2025-08-19T09:20:08.785+0000] {subprocess.py:93} INFO - 	at jdk.internal.reflect.GeneratedMethodAccessor22.invoke(Unknown Source)
+[2025-08-19T09:20:08.785+0000] {subprocess.py:93} INFO - 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+[2025-08-19T09:20:08.785+0000] {subprocess.py:93} INFO - 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+[2025-08-19T09:20:08.785+0000] {subprocess.py:93} INFO - 	at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:244)
+[2025-08-19T09:20:08.786+0000] {subprocess.py:93} INFO - 	at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:374)
+[2025-08-19T09:20:08.796+0000] {subprocess.py:93} INFO - 	at py4j.Gateway.invoke(Gateway.java:282)
+[2025-08-19T09:20:08.797+0000] {subprocess.py:93} INFO - 	at py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:132)
+[2025-08-19T09:20:08.804+0000] {subprocess.py:93} INFO - 	at py4j.commands.CallCommand.execute(CallCommand.java:79)
+[2025-08-19T09:20:08.804+0000] {subprocess.py:93} INFO - 	at py4j.ClientServerConnection.waitForCommands(ClientServerConnection.java:182)
+[2025-08-19T09:20:08.811+0000] {subprocess.py:93} INFO - 	at py4j.ClientServerConnection.run(ClientServerConnection.java:106)
+[2025-08-19T09:20:08.812+0000] {subprocess.py:93} INFO - 	at java.base/java.lang.Thread.run(Thread.java:840)
+[2025-08-19T09:20:08.815+0000] {subprocess.py:93} INFO - 
+[2025-08-19T09:20:08.955+0000] {subprocess.py:93} INFO - 25/08/19 09:20:08 INFO SparkContext: Invoking stop() from shutdown hook
+[2025-08-19T09:20:08.955+0000] {subprocess.py:93} INFO - 25/08/19 09:20:08 INFO SparkContext: SparkContext is stopping with exitCode 0.
+[2025-08-19T09:20:09.121+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO SparkUI: Stopped Spark web UI at http://b208641feb52:4041
+[2025-08-19T09:20:09.167+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO StandaloneSchedulerBackend: Shutting down all executors
+[2025-08-19T09:20:09.214+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO StandaloneSchedulerBackend$StandaloneDriverEndpoint: Asking each executor to shut down
+[2025-08-19T09:20:09.526+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO MapOutputTrackerMasterEndpoint: MapOutputTrackerMasterEndpoint stopped!
+[2025-08-19T09:20:09.634+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO MemoryStore: MemoryStore cleared
+[2025-08-19T09:20:09.635+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO BlockManager: BlockManager stopped
+[2025-08-19T09:20:09.664+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO BlockManagerMaster: BlockManagerMaster stopped
+[2025-08-19T09:20:09.668+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO OutputCommitCoordinator$OutputCommitCoordinatorEndpoint: OutputCommitCoordinator stopped!
+[2025-08-19T09:20:09.750+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO SparkContext: Successfully stopped SparkContext
+[2025-08-19T09:20:09.760+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO ShutdownHookManager: Shutdown hook called
+[2025-08-19T09:20:09.762+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO ShutdownHookManager: Deleting directory /tmp/spark-7412dde6-8cca-4690-a328-7f95a5f59292/pyspark-5139960c-450f-422a-9de3-09c6a387504f
+[2025-08-19T09:20:09.800+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO ShutdownHookManager: Deleting directory /tmp/spark-7412dde6-8cca-4690-a328-7f95a5f59292
+[2025-08-19T09:20:09.820+0000] {subprocess.py:93} INFO - 25/08/19 09:20:09 INFO ShutdownHookManager: Deleting directory /tmp/spark-6522b2b2-ea29-4cd2-9d32-43ad324aac82
+[2025-08-19T09:20:10.260+0000] {subprocess.py:97} INFO - Command exited with return code 1
+[2025-08-19T09:20:10.262+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2025-08-19T09:20:10.342+0000] {taskinstance.py:2890} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.9/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+  File "/home/airflow/.local/lib/python3.9/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+  File "/home/airflow/.local/lib/python3.9/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+  File "/home/airflow/.local/lib/python3.9/site-packages/airflow/operators/bash.py", line 243, in execute
+    raise AirflowException(
+airflow.exceptions.AirflowException: Bash command failed. The command returned a non-zero exit code 1.
+[2025-08-19T09:20:10.366+0000] {taskinstance.py:1205} INFO - Marking task as UP_FOR_RETRY. dag_id=youtube_pipeline_batch_data, task_id=transform_golden, execution_date=20250819T091113, start_date=20250819T091854, end_date=20250819T092010
+[2025-08-19T09:20:10.484+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 599 for task transform_golden (Bash command failed. The command returned a non-zero exit code 1.; 2257)
+[2025-08-19T09:20:10.524+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2025-08-19T09:20:10.652+0000] {taskinstance.py:3482} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2025-08-19T09:20:10.658+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
