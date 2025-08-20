@@ -114,6 +114,28 @@ with DAG(
 
         """,
     )
+
+    spark_batch_analytics = BashOperator(
+        task_id="spark_batch_analytics",
+        bash_command=(
+            "docker exec spark-master "
+            "spark-submit "
+            "--master spark://spark-master:7077 "
+            "--deploy-mode client "
+            "/opt/airflow/jobs/transformation/spark_batch_analytics.py"
+        ),
+    )
+
+    spark_batch_analytics_datalake = BashOperator(
+        task_id="spark_batch_analytics_datalake",
+        bash_command=(
+            "docker exec spark-master "
+            "spark-submit "
+            "--master spark://spark-master:7077 "
+            "--deploy-mode client "
+            "/opt/airflow/jobs/transformation/spark_batch_analytics_datalake.py"
+        ),
+    )
     
     golden_to_star = BashOperator(
         task_id="golden_to_star",
@@ -167,6 +189,10 @@ with DAG(
     validate_ingest >> transform_golden >> validate_transform
 
     validate_transform >> golden_to_star
+
+    validate_transform >> spark_batch_analytics >> final_task
+
+    validate_transform >> spark_batch_analytics_datalake >> final_task
     
     # Svi SQL taskovi se pokreću nakon golden_to_star
     for sql_task in sql_tasks:

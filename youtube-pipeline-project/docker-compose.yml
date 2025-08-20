@@ -1,28 +1,146 @@
 version: "3.8"
 
 services:
-  zookeeper:
-    image: bitnami/zookeeper:3.9.2
-    container_name: zookeeper
-    environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
-    ports:
-      - "2181:2181"
+  # zookeeper:
+  #   image: bitnami/zookeeper:3.9.2
+  #   container_name: zookeeper
+  #   environment:
+  #     - ALLOW_ANONYMOUS_LOGIN=yes
+  #   ports:
+  #     - "2181:2181"
 
-  kafka:
-    image: bitnami/kafka:3.6.1-debian-11-r0
-    container_name: kafka
-    ports:
-      - "9092:9092"
-    environment:
-      - KAFKA_BROKER_ID=1
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - ALLOW_PLAINTEXT_LISTENER=yes
-    depends_on:
-      - zookeeper
+  # kafka:
+  #   image: bitnami/kafka:3.6.1-debian-11-r0
+  #   container_name: kafka
+  #   ports:
+  #     - "9092:9092"
+  #   environment:
+  #     - KAFKA_BROKER_ID=1
+  #     - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+  #     - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+  #     - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+  #     - ALLOW_PLAINTEXT_LISTENER=yes
+  #   depends_on:
+  #     - zookeeper
 
+  # producer:
+  #   build: ./streaming/kafka_producer
+  #   container_name: producer
+  #   depends_on:
+  #     - kafka
+  #   restart: unless-stopped
+
+  # consumer:
+  #   build: ./streaming/kafka_consumer
+  #   container_name: consumer
+  #   depends_on:
+  #     - kafka
+  #   restart: unless-stopped
+
+  # zk-druid:
+  #   image: zookeeper:3.8
+  #   container_name: zk-druid
+  #   environment:
+  #     ZOO_MY_ID: 1
+  #     ZOO_SERVERS: server.1=zk-druid:2888:3888;2181
+  #   ports:
+  #     - "2182:2181"
+
+  # # DRUID COORDINATOR
+  # druid-coordinator:
+  #   image: apache/druid:28.0.1
+  #   container_name: druid-coordinator
+  #   user: "0:0"
+  #   environment:
+  #     - DRUID_XMX=1g
+  #     - DRUID_XMS=1g
+  #   volumes:
+  #     - druid_shared:/opt/shared
+  #     - ./druid-config:/opt/druid/conf/druid/single-server/nano-quickstart
+  #   ports:
+  #     - "8084:8081"
+  #   command:
+  #     - coordinator
+  #   depends_on:
+  #     - zk-druid
+
+  # druid-broker:
+  #   image: apache/druid:28.0.1
+  #   container_name: druid-broker
+  #   user: "0:0"
+  #   environment:
+  #     - DRUID_XMX=1g
+  #     - DRUID_XMS=1g
+  #   volumes:
+  #     - druid_shared:/opt/shared
+  #     - ./druid-config:/opt/druid/conf/druid/single-server/nano-quickstart
+  #   ports:
+  #     - "8082:8082"
+  #   command:
+  #     - broker
+  #   depends_on:
+  #     - zk-druid
+
+  # druid-historical:
+  #   image: apache/druid:28.0.1
+  #   container_name: druid-historical
+  #   user: "0:0" 
+  #   environment:
+  #     - DRUID_XMX=1g
+  #     - DRUID_XMS=1g
+  #   volumes:
+  #     - druid_shared:/opt/shared
+  #     - druid_segments:/opt/druid/var/druid/segments
+  #     - druid_indexing_logs:/opt/druid/var/druid/indexing-logs
+  #     - druid_task:/opt/druid/var/druid/task
+  #     - druid_hadoop_tmp:/opt/druid/var/druid/hadoop-tmp
+  #     - druid_segment_cache:/opt/druid/var/druid/segment-cache
+  #     - ./druid-config:/opt/druid/conf/druid/single-server/nano-quickstart
+  #   ports:
+  #     - "8083:8083"
+  #   command:
+  #     - historical
+  #   depends_on:
+  #     - zk-druid
+
+  # druid-middlemanager:
+  #   image: apache/druid:28.0.1
+  #   container_name: druid-middlemanager
+  #   user: "0:0" 
+  #   environment:
+  #     - DRUID_XMX=1g
+  #     - DRUID_XMS=1g
+  #   volumes:
+  #     - druid_shared:/opt/shared
+  #     - druid_task_logs:/opt/druid/var/druid/task
+  #     - druid_segments:/opt/druid/var/druid/segments
+  #     - druid_indexing_logs:/opt/druid/var/druid/indexing-logs
+  #     - druid_hadoop_tmp:/opt/druid/var/druid/hadoop-tmp
+  #     - druid_segment_cache:/opt/druid/var/druid/segment-cache
+  #     - ./druid-config:/opt/druid/conf/druid/single-server/nano-quickstart
+  #   ports:
+  #     - "8091:8091"
+  #   command:
+  #     - middleManager
+  #   depends_on:
+  #     - zk-druid
+
+  # druid-router:
+  #   image: apache/druid:28.0.1
+  #   container_name: druid-router
+  #   user: "0:0" 
+  #   environment:
+  #     - DRUID_XMX=512m
+  #     - DRUID_XMS=512m
+  #   volumes:
+  #     - ./druid-config:/opt/druid/conf/druid/single-server/nano-quickstart
+  #   ports:
+  #     - "8085:8888"  # Druid Web Console
+  #   command:
+  #     - router
+  #   depends_on:
+  #     - druid-coordinator
+  #     - druid-broker
 
   spark-master:
     image: bitnami/spark:3.5.1
@@ -31,6 +149,11 @@ services:
       - SPARK_MODE=master
       - SPARK_WORKER_MEMORY=8G
       - SPARK_WORKER_CORES=4
+      #dodato za real-time
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
     ports:
       - "7077:7077"
       - "8080:8080"
@@ -39,16 +162,42 @@ services:
       - ./app:/app
       - ./batch:/opt/airflow/jobs
       - ./data/raw:/app/data/raw
+      - ./streaming/spark_streaming:/opt/spark_apps
 
   spark-worker:
     image: bitnami/spark:3.5.1
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
+      #dodato za real-time
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_EXECUTOR_MEMORY=1g
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
     depends_on:
-      - spark-master
+      - spark-master 
     deploy:
       replicas: 3
+    volumes:
+      - ./streaming/spark_streaming:/opt/spark_apps
+
+  # spark-streaming:
+  #   build: ./streaming/spark_streaming
+  #   container_name: spark-streaming-app
+  #   environment:
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - KAFKA_BROKERS=kafka:9092
+  #     - DRUID_BROKER_HOST=druid-broker
+  #     - DRUID_BROKER_PORT=8082
+  #   depends_on:
+  #     - kafka
+  #     - druid-router
+  #     - spark-master
+  #   volumes:
+  #     - ./streaming/spark_streaming:/opt/spark_apps
+  #   restart: unless-stopped
 
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
@@ -107,16 +256,38 @@ services:
       POSTGRES_DB: airflow
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      retries: 5
+      start_period: 10s
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: airflow       # koristiš isti DB kao Postgres service
+      MB_DB_PORT: 5432
+      MB_DB_USER: airflow
+      MB_DB_PASS: airflow
+      MB_DB_HOST: postgres
+    restart: unless-stopped        # ime service-a iz docker-compose
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   airflow:
     image: apache/airflow:2.9.0-python3.9
     container_name: airflow
-    privileged: true
-    user: root 
+    user: root
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__WEBSERVER__SECRET_KEY: my_secret_key
+      AIRFLOW__CORE__FERNET_KEY: "53jGBE2ia04E69Y5gH2EG-LNG-7DKTXY56OGU6oQaL8="
     depends_on:
       - postgres
     ports:
@@ -128,25 +299,18 @@ services:
       - ./batch:/opt/airflow/jobs
       - ./sql:/opt/airflow/sql
       - /var/run/docker.sock:/var/run/docker.sock
-    # Dodaj grup docker - obično ima GID 999
     group_add:
       - 999
     command: >
       bash -c "
-        # Instaliraj Docker CLI
         apt-get update &&
         apt-get install -y docker.io &&
-        
-        # Instaliraj potrebne pakete
-        pip install apache-airflow-providers-postgres==5.10.2 &&
-        pip install apache-airflow-providers-apache-spark==4.7.1 &&
-        
-        airflow db migrate &&
+        pip install apache-airflow-providers-postgres==5.10.2 apache-airflow-providers-apache-spark==4.7.1 &&
+        airflow db upgrade &&
         airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@example.com || true &&
-        airflow connections add 'citus_dw' --conn-uri 'postgresql+psycopg2://citus:citus@citus_coordinator:5432/youtube_dw' || true &&
-        exec airflow standalone"
+        exec airflow webserver & exec airflow scheduler
+      "
 
- 
 
   cloudera:
     image: gethue/hue:20201111-135001
@@ -164,57 +328,55 @@ services:
     depends_on: 
       - namenode
       
-  superset:
-    image: apache/superset:3.0.0
-    container_name: superset
-    ports:
-      - "8088:8088"
-    environment:
-      - SUPERSET_SECRET_KEY=some_very_secret_key
-    depends_on:
-      - postgres
 
 
-  citus_coordinator:
-    image: citusdata/citus:11.3
-    container_name: citus_coordinator
-    environment:
-      POSTGRES_USER: citus
-      POSTGRES_PASSWORD: citus
-      POSTGRES_DB: youtube_dw
-    ports:
-      - "5433:5432"  # Da ne sudari sa postojećim Postgresom na 5432
-    volumes:
-      - citus_data:/var/lib/postgresql/data
-    command: postgres -c shared_preload_libraries=citus
+  # citus_coordinator:
+  #   image: citusdata/citus:11.3
+  #   container_name: citus_coordinator
+  #   environment:
+  #     POSTGRES_USER: citus
+  #     POSTGRES_PASSWORD: citus
+  #     POSTGRES_DB: youtube_dw
+  #   ports:
+  #     - "5433:5432"  # Da ne sudari sa postojećim Postgresom na 5432
+  #   volumes:
+  #     - citus_data:/var/lib/postgresql/data
+  #   command: postgres -c shared_preload_libraries=citus
 
-  citus_worker1:
-    image: citusdata/citus:11.3
-    container_name: citus_worker1
-    environment:
-      POSTGRES_USER: citus
-      POSTGRES_PASSWORD: citus
-      POSTGRES_DB: youtube_dw
-    volumes:
-      - citus_worker1_data:/var/lib/postgresql/data
-    command: postgres -c shared_preload_libraries=citus
+  # citus_worker1:
+  #   image: citusdata/citus:11.3
+  #   container_name: citus_worker1
+  #   environment:
+  #     POSTGRES_USER: citus
+  #     POSTGRES_PASSWORD: citus
+  #     POSTGRES_DB: youtube_dw
+  #   volumes:
+  #     - citus_worker1_data:/var/lib/postgresql/data
+  #   command: postgres -c shared_preload_libraries=citus
 
-  citus_worker2:
-    image: citusdata/citus:11.3
-    container_name: citus_worker2
-    environment:
-      POSTGRES_USER: citus
-      POSTGRES_PASSWORD: citus
-      POSTGRES_DB: youtube_dw
-    volumes:
-      - citus_worker2_data:/var/lib/postgresql/data
-    command: postgres -c shared_preload_libraries=citus
+  # citus_worker2:
+  #   image: citusdata/citus:11.3
+  #   container_name: citus_worker2
+  #   environment:
+  #     POSTGRES_USER: citus
+  #     POSTGRES_PASSWORD: citus
+  #     POSTGRES_DB: youtube_dw
+  #   volumes:
+  #     - citus_worker2_data:/var/lib/postgresql/data
+  #   command: postgres -c shared_preload_libraries=citus
 
 
 volumes:
   hdfs_namenode:
   hdfs_datanode:
   postgres_data:
-  citus_data:
-  citus_worker1_data:
-  citus_worker2_data:
+  # citus_data:
+  # citus_worker1_data:
+  # citus_worker2_data:
+  druid_shared:
+  druid_segments:
+  druid_task_logs:
+  druid_indexing_logs:
+  druid_task:
+  druid_hadoop_tmp:
+  druid_segment_cache:

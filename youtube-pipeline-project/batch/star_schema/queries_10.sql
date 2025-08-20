@@ -286,9 +286,10 @@ LIMIT 30;
 
 
 -- =====================================================
--- 6️⃣ Koji tagovi, pored osnovne popularnosti, ostvaruju najbolje sezonske trendove i regionalne rezultate, kakva je njihova geografska dominacija i 
---    broj aktivnih regiona, kakav im je dodeljeni “power level” na osnovu uspešnosti, 
---    i koju preporuku za buduću upotrebu zaslužuju na osnovu kombinacije svih ovih faktora?
+-- 6️⃣ Koje tagove, pored osnovne popularnosti, karakteriše najbolja kombinacija viralnog potencijala i tržišne pozicije, 
+--    kakav im je dodeljeni "power level" na osnovu uspešnosti u različitim kategorijama i regionima, 
+--    koju preporuku za buduću upotrebu zaslužuju na osnovu viral score-a i success rate-a, 
+--    i kako se rangiraju globalno kao i unutar svojih power level grupa uz smoothed viral score trend analizu?
 -- =====================================================
 WITH tag_explosion AS (
     SELECT 
