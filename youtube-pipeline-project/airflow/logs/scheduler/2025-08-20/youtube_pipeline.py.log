@@ -1812,3 +1812,59 @@
 [2025-08-20T15:04:43.043+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:04:43.043+0000] {dag.py:3096} INFO - Sync 1 DAGs
 [2025-08-20T15:04:43.057+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:04:43.056+0000] {dag.py:3954} INFO - Setting next_dagrun for youtube_pipeline_batch_data to None, run_after=None
 [2025-08-20T15:04:43.082+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/youtube_pipeline.py took 0.119 seconds
+[2025-08-20T15:05:13.184+0000] {processor.py:161} INFO - Started process (PID=2390) to work on /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:05:13.185+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/youtube_pipeline.py for tasks to queue
+[2025-08-20T15:05:13.187+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:05:13.186+0000] {dagbag.py:540} INFO - Filling up the DagBag from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:05:13.201+0000] {processor.py:840} INFO - DAG(s) 'youtube_pipeline_batch_data' retrieved from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:05:13.238+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:05:13.238+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2025-08-20T15:05:13.252+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:05:13.252+0000] {dag.py:3954} INFO - Setting next_dagrun for youtube_pipeline_batch_data to None, run_after=None
+[2025-08-20T15:05:13.280+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/youtube_pipeline.py took 0.104 seconds
+[2025-08-20T15:05:43.532+0000] {processor.py:161} INFO - Started process (PID=2395) to work on /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:05:43.539+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/youtube_pipeline.py for tasks to queue
+[2025-08-20T15:05:43.542+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:05:43.542+0000] {dagbag.py:540} INFO - Filling up the DagBag from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:05:43.566+0000] {processor.py:840} INFO - DAG(s) 'youtube_pipeline_batch_data' retrieved from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:05:43.622+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:05:43.622+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2025-08-20T15:05:43.643+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:05:43.642+0000] {dag.py:3954} INFO - Setting next_dagrun for youtube_pipeline_batch_data to None, run_after=None
+[2025-08-20T15:05:43.681+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/youtube_pipeline.py took 0.161 seconds
+[2025-08-20T15:06:13.791+0000] {processor.py:161} INFO - Started process (PID=2400) to work on /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:06:13.792+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/youtube_pipeline.py for tasks to queue
+[2025-08-20T15:06:13.794+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:06:13.793+0000] {dagbag.py:540} INFO - Filling up the DagBag from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:06:13.808+0000] {processor.py:840} INFO - DAG(s) 'youtube_pipeline_batch_data' retrieved from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:06:13.843+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:06:13.843+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2025-08-20T15:06:13.857+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:06:13.856+0000] {dag.py:3954} INFO - Setting next_dagrun for youtube_pipeline_batch_data to None, run_after=None
+[2025-08-20T15:06:13.883+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/youtube_pipeline.py took 0.101 seconds
+[2025-08-20T15:06:44.144+0000] {processor.py:161} INFO - Started process (PID=2405) to work on /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:06:44.154+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/youtube_pipeline.py for tasks to queue
+[2025-08-20T15:06:44.163+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:06:44.161+0000] {dagbag.py:540} INFO - Filling up the DagBag from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:06:44.197+0000] {processor.py:840} INFO - DAG(s) 'youtube_pipeline_batch_data' retrieved from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:06:44.238+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:06:44.238+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2025-08-20T15:06:44.252+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:06:44.252+0000] {dag.py:3954} INFO - Setting next_dagrun for youtube_pipeline_batch_data to None, run_after=None
+[2025-08-20T15:06:44.280+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/youtube_pipeline.py took 0.167 seconds
+[2025-08-20T15:07:14.361+0000] {processor.py:161} INFO - Started process (PID=2410) to work on /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:07:14.361+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/youtube_pipeline.py for tasks to queue
+[2025-08-20T15:07:14.363+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:07:14.363+0000] {dagbag.py:540} INFO - Filling up the DagBag from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:07:14.377+0000] {processor.py:840} INFO - DAG(s) 'youtube_pipeline_batch_data' retrieved from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:07:14.412+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:07:14.412+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2025-08-20T15:07:14.425+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:07:14.425+0000] {dag.py:3954} INFO - Setting next_dagrun for youtube_pipeline_batch_data to None, run_after=None
+[2025-08-20T15:07:14.453+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/youtube_pipeline.py took 0.099 seconds
+[2025-08-20T15:07:44.582+0000] {processor.py:161} INFO - Started process (PID=2415) to work on /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:07:44.590+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/youtube_pipeline.py for tasks to queue
+[2025-08-20T15:07:44.591+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:07:44.591+0000] {dagbag.py:540} INFO - Filling up the DagBag from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:07:44.606+0000] {processor.py:840} INFO - DAG(s) 'youtube_pipeline_batch_data' retrieved from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:07:44.644+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:07:44.643+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2025-08-20T15:07:44.659+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:07:44.658+0000] {dag.py:3954} INFO - Setting next_dagrun for youtube_pipeline_batch_data to None, run_after=None
+[2025-08-20T15:07:44.686+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/youtube_pipeline.py took 0.113 seconds
+[2025-08-20T15:08:14.883+0000] {processor.py:161} INFO - Started process (PID=2420) to work on /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:08:14.884+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/youtube_pipeline.py for tasks to queue
+[2025-08-20T15:08:14.885+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:08:14.885+0000] {dagbag.py:540} INFO - Filling up the DagBag from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:08:14.899+0000] {processor.py:840} INFO - DAG(s) 'youtube_pipeline_batch_data' retrieved from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:08:14.935+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:08:14.935+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2025-08-20T15:08:14.950+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:08:14.950+0000] {dag.py:3954} INFO - Setting next_dagrun for youtube_pipeline_batch_data to None, run_after=None
+[2025-08-20T15:08:14.981+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/youtube_pipeline.py took 0.106 seconds
+[2025-08-20T15:08:45.112+0000] {processor.py:161} INFO - Started process (PID=2425) to work on /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:08:45.120+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/youtube_pipeline.py for tasks to queue
+[2025-08-20T15:08:45.122+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:08:45.122+0000] {dagbag.py:540} INFO - Filling up the DagBag from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:08:45.136+0000] {processor.py:840} INFO - DAG(s) 'youtube_pipeline_batch_data' retrieved from /opt/airflow/dags/youtube_pipeline.py
+[2025-08-20T15:08:45.172+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:08:45.172+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2025-08-20T15:08:45.186+0000] {logging_mixin.py:188} INFO - [2025-08-20T15:08:45.186+0000] {dag.py:3954} INFO - Setting next_dagrun for youtube_pipeline_batch_data to None, run_after=None
+[2025-08-20T15:08:45.211+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/youtube_pipeline.py took 0.111 seconds
