@@ -1,5 +1,26 @@
 version: "3.8"
 
+x-airflow-common:
+  &airflow-common
+  image: apache/airflow:2.8.1
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
+    _PIP_ADDITIONAL_REQUIREMENTS: ""
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+    - ./airflow/plugins:/opt/airflow/plugins
+    - ./batch:/opt/airflow/jobs
+    - ./sql:/opt/airflow/sql
+    - /var/run/docker.sock:/var/run/docker.sock
+  user: "${AIRFLOW_UID}:0"
+  depends_on:
+    - postgres
+
 services:
   # zookeeper:
   #   image: bitnami/zookeeper:3.9.2
@@ -163,6 +184,7 @@ services:
       - ./batch:/opt/airflow/jobs
       - ./data/raw:/app/data/raw
       - ./streaming/spark_streaming:/opt/spark_apps
+      - ./jars:/opt/spark/jars/postgresql-42.7.6.jar
 
   spark-worker:
     image: bitnami/spark:3.5.1
@@ -182,6 +204,8 @@ services:
       replicas: 3
     volumes:
       - ./streaming/spark_streaming:/opt/spark_apps
+      - ./jars:/opt/spark/jars/postgresql-42.7.6.jar
+
 
   # spark-streaming:
   #   build: ./streaming/spark_streaming
@@ -210,6 +234,7 @@ services:
       - 9000:9000
     volumes:
       - hdfs_namenode:/hadoop/dfs/name
+      #- ./data:/data
     ulimits:
       nofile:
         soft: 65536
@@ -247,20 +272,7 @@ services:
     stdin_open: true
 
 
-  postgres:
-    image: postgres:13
-    container_name: postgres
-    environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U airflow"]
-      interval: 5s
-      retries: 5
-      start_period: 10s
+
 
   metabase:
     image: metabase/metabase:latest
@@ -269,47 +281,52 @@ services:
       - "3000:3000"
     environment:
       MB_DB_TYPE: postgres
-      MB_DB_DBNAME: airflow       # koristiš isti DB kao Postgres service
+      MB_DB_DBNAME: ${POSTGRES_DB}    # koristiš isti DB kao Postgres service
       MB_DB_PORT: 5432
-      MB_DB_USER: airflow
-      MB_DB_PASS: airflow
+      MB_DB_USER: ${POSTGRES_USER}
+      MB_DB_PASS: ${POSTGRES_PASSWORD}
       MB_DB_HOST: postgres
     restart: unless-stopped        # ime service-a iz docker-compose
     depends_on:
-      postgres:
-        condition: service_healthy
-
-  airflow:
-    image: apache/airflow:2.9.0-python3.9
-    container_name: airflow
-    user: root
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-      AIRFLOW__WEBSERVER__SECRET_KEY: my_secret_key
-      AIRFLOW__CORE__FERNET_KEY: "53jGBE2ia04E69Y5gH2EG-LNG-7DKTXY56OGU6oQaL8="
-    depends_on:
       - postgres
+       
+
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "8081:8080"
+      - "${POSTGRES_PORT}:5432"
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
-      - ./batch:/opt/airflow/jobs
-      - ./sql:/opt/airflow/sql
-      - /var/run/docker.sock:/var/run/docker.sock
-    group_add:
-      - 999
-    command: >
-      bash -c "
-        apt-get update &&
-        apt-get install -y docker.io &&
-        pip install apache-airflow-providers-postgres==5.10.2 apache-airflow-providers-apache-spark==4.7.1 &&
-        airflow db upgrade &&
-        airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@example.com || true &&
-        exec airflow webserver & exec airflow scheduler
-      "
+      - postgres-db-volume:/var/lib/postgresql/data
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "${AIRFLOW_PORT}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+
+  airflow-init:
+    <<: *airflow-common
+    command: bash -c "airflow db migrate && airflow users create \
+      --username admin \
+      --password admin \
+      --firstname Admin \
+      --lastname User \
+      --role Admin \
+      --email admin@example.com"
 
 
   cloudera:
@@ -369,7 +386,7 @@ services:
 volumes:
   hdfs_namenode:
   hdfs_datanode:
-  postgres_data:
+  postgres-db-volume:
   # citus_data:
   # citus_worker1_data:
   # citus_worker2_data:

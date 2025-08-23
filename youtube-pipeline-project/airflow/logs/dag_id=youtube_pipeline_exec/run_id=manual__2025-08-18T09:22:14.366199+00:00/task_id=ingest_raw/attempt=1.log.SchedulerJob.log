@@ -1,1 +1,0 @@
-[2025-08-18T09:22:15.671+0000] {scheduler_job_runner.py:769} ERROR - Executor reports task instance <TaskInstance: youtube_pipeline_exec.ingest_raw manual__2025-08-18T09:22:14.366199+00:00 [queued]> finished (failed) although the task says it's queued. (Info: None) Was the task killed externally?

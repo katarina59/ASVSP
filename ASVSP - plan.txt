@@ -1,0 +1,821 @@
+uraditi star shemu *
+postaviti airflow *
+izabran citus *
+
+bitne komande:
+
+docker exec -it youtube-pipeline-project_spark-master_1 spark-submit --packages org.apache.spark:spark-avro_2.12:3.5.1 /app/batch/ingestion/ingest_raw_to_hdfs.py
+
+
+docker exec -it youtube-pipeline-project_spark-master_1 spark-submit --packages org.apache.spark:spark-avro_2.12:3.5.1 /app/batch/transformation/transform_to_golden_dataset.py
+
+docker exec -it youtube-pipeline-project_spark-master_1 spark-submit     --packages org.postgresql:postgresql:42.6.0 /app/batch/star_schema/golden_to_star_citus.py
+
+
+docker exec -it youtube-pipeline-project_citus_coordinator_1 psql -U citus -d youtube_dw
+
+upiti:
+
+
+1. Koja je prosečna gledanost i prosečan broj komentara po kategoriji, regionu i datumu kada su videi postali trending, i kako se ti proseci razlikuju za videe sa uključenim i onemogućenim komentarima? Koje kategorije i regioni dominiraju po gledanosti, a kako se trend pregleda menja tokom poslednja tri dana?
+
+
+2. Koje kategorije i kanali ostvaruju najveći angažman korisnika?  
+Koliki je njihov engagement score (ukupan broj lajkova + komentara), kao i da li taj angažman dolazi iz pozitivnog ili negativnog feedbacka.
+Kako se rangiraju unutar svojih kategorija?  
+Koji su top 5 kanala po angažmanu u svakoj kategoriji?
+
+
+3. Koje YouTube kategorije i regioni su top 10% najbržih viralnih videa i istovremeno među top 10% po trajanju na trending listi?
+Koliko prosečno treba da video dospe na trending i koliko dugo ostaje, i kako se ove kombinacije rangiraju u odnosu na sve ostale?
+Koji sadržaji su i instant hit i dugotrajni hit, tj. “zlatne kombinacije”?
+
+4. Koji tip problema je najčešći po kombinaciji kategorije i regiona i koliki procenat problematičnih videa čini?
+
+5. Koji su tagovi, izdvojeni iz liste tagova u videima, najčešći i najuspešniji prema osnovnim metrikama kao što su broj videa, prosečni lajkovi, broj regiona i kategorija u kojima se pojavljuju, viral rate i ukupna popularnost, i kako se rangiraju prema kombinovanom “viral score” pokazatelju?
+
+
+6. Koji tagovi, pored osnovne popularnosti, ostvaruju najbolje sezonske trendove i regionalne rezultate, kakva je njihova geografska dominacija i broj aktivnih regiona, kakav im je dodeljeni “power level” na osnovu uspešnosti, i koju preporuku za buduću upotrebu zaslužuju na osnovu kombinacije svih ovih faktora?
+
+
+7. 
+
+
+8.
+
+
+9.
+
+
+10.
+
+
+
+
+
+
+3. Koliki je procenat trending videa sa onemogućenim komentarima i ocenama u svakoj zemlji, i kako se taj procenat razlikuje za videe u različitim kategorijama i danima u nedelji kada su postali trending? +
+
+4.  Koji dan u nedelji ima najviše objavljenih videa koji su postali trending, grupisano po zemlji, kategoriji i prosečnom broju pregleda? +
+
+5. Koliko je prosečno potrebno dana od objavljivanja do trenutka kada video postane trending, za svaku kategoriju i region, uz analizu korelacije između vremena kašnjenja i broja pregleda? +
+
+6. Kakav je odnos prosečnog broja komentara u odnosu na preglede po kategoriji, regionu i kanalu videa? +
+
+7. Koji su najčešće korišćeni tagovi za trending videe, grupisani po regionima i prosečnom broju pregleda po tagu? +
+
+8. Koji videi imaju najbolji odnos između broja lajkova i dislajkova, uz prosečan broj komentara, grupisano po zemlji, kategoriji i vremenu objavljivanja? +
+
+9. Koliki je ukupan broj pregleda za videe koji su uklonjeni ili imaju grešku, i kako se taj broj razlikuje po kategorijama i zemljama? +
+
+10. Kakva je distribucija broja pregleda, lajkova, i komentara po kategorijama, zemljama, i intervalima trajanja videa? 
+
+star schema
+
+fact 
+
+video_id category_id publish_time trending_date_fixed region_id likes dislikes comment_count dim1 category_id category_title assignable 
+
+dim2 
+
+video_id video_title channel_title tags_list thumbnail_link comments_disable ratings_disabled video_error_or_removed description 
+
+dim3 publish_time publish_date publish_month publis_year 
+
+dim4 trending_date_fixed trending_full_date trending_month trending_year 
+
+dim5 region_id region
+
+
+evo ovako za 1. upit razmisljanje:
+
+1️⃣ RAZUMEVANJE ZAHTEVA
+Tvoj zahtev: "Koja je prosečna gledanost i prosečan broj komentara po kategoriji, zemlji i danu kada su videi postali trending, i kako se ti proseci razlikuju za videe sa onemogućenim komentarima?"
+Moje razmišljanje:
+
+Treba mi grupiranje po: kategoriji + zemlji + danu trending-a + status komentara
+Treba mi prosečne vrednosti za views i comment_count
+Treba poređenje između videa sa omogućenim vs onemogućenim komentarima
+Plus mora da koristi WINDOW funkcije (zahtev zadatka)
+
+2️⃣ STRUKTURA PODATAKA - RAZUMEVANJE ŠEME
+
+FACT tabela: fact_trending_videos
+- video_id, category_id, region_id, trending_date_fixed
+- views, likes, dislikes, comment_count ← OVO su mi brojevi za analizu
+
+DIMENSION tabele:
+- dim_category (category_id → category_title)
+- dim_region (region_id → region)  
+- dim_trending_date (trending_date_fixed → trending_full_date)
+- dim_video (video_id → comments_disabled) ← OVO je ključno za poređenje!
+
+3️⃣ STRATEGIJA REŠAVANJA
+Korak 1: JOIN-uj sve potrebne tabele da dobijem kompletnu sliku
+Korak 2: GROUP BY po svim dimenzijama koje me zanimaju
+Korak 3: Izračunaj osnovne statistike (AVG, COUNT)
+Korak 4: Dodaj WINDOW funkcije za dodatne insights
+
+4️⃣ DETALJNO OBJAŠNJENJE SVAKOG DELA
+A) JOIN deo
+FROM fact_trending_videos f
+JOIN dim_category dc ON f.category_id = dc.category_id
+JOIN dim_region dr ON f.region_id = dr.region_id  
+JOIN dim_trending_date dt ON f.trending_date_fixed = dt.trending_date_fixed
+JOIN dim_video dv ON f.video_id = dv.video_id
+
+Zašto ovako?
+
+Treba mi category_title (umesto samo ID-ja) → JOIN sa dim_category
+Treba mi region (umesto samo ID-ja) → JOIN sa dim_region
+Treba mi trending_full_date → JOIN sa dim_trending_date
+KLJUČNO: Treba mi comments_disabled → JOIN sa dim_video
+
+B) GROUP BY deo
+GROUP BY 
+    dc.category_title, 
+    dr.region, 
+    dt.trending_full_date, 
+    dv.comments_disabled
+
+Moje razmišljanje:
+
+Svaki red u rezultatu = jedna kombinacija (kategorija + regija + dan + status komentara)
+Na primer: "Music + US + 2023-01-15 + comments_disabled=false" = jedan red
+I posebno: "Music + US + 2023-01-15 + comments_disabled=true" = drugi red
+Tako mogu da poredim kako comments_disabled utiče na statistike!
+
+C) Osnovne statistike
+
+COUNT(*) as video_count,
+ROUND(AVG(f.views), 2) as avg_views,
+ROUND(AVG(f.comment_count), 2) as avg_comments,
+
+Direktno odgovara na tvoje pitanje:
+
+Koliko videa je bilo trending tog dana u toj kategoriji/regiji
+Prosečna gledanost za tu grupu
+Prosečan broj komentara za tu grupu
+
+D) WINDOW funkcije - ovo je "začin" 🌶️
+1) Rangiranje
+
+RANK() OVER (
+    PARTITION BY dc.category_title, dr.region 
+    ORDER BY AVG(f.views) DESC
+) as views_rank
+
+Moje razmišljanje:
+
+"Unutar svake kombinacije kategorija+regija, rangiraj dane po gledanosti"
+Na primer: Music u US-u - koji dan je bio najbolji, koji drugi, treći...
+Zašto RANK a ne ROW_NUMBER? Jer možda ima vezane pozicije (isti prosek)
+
+2) Pokretni prosek
+
+AVG(AVG(f.views)) OVER (
+    PARTITION BY dc.category_title, dr.region, dv.comments_disabled
+    ORDER BY dt.trending_full_date
+    ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+) as moving_avg_views_3d
+
+Objašnjenje po koracima:
+
+AVG(f.views) = prosek za trenutni dan (iz GROUP BY-ja)
+AVG(AVG(f.views)) OVER (...) = prosek tih proseka kroz vreme
+PARTITION BY = za svaku kategoriju+regiju+comments_status posebno
+ORDER BY trending_full_date = sortiraj po datumu
+ROWS BETWEEN 2 PRECEDING AND CURRENT ROW = uzmi 3 dana (2 prethodna + trenutni)
+
+Zašto ovo? Da vidim trend - da li gledanost raste ili opada kroz vreme.
+
+3) Razlika od proseka kategorije
+AVG(f.views) - AVG(AVG(f.views)) OVER (
+    PARTITION BY dc.category_title, dv.comments_disabled
+) as diff_from_category_avg
+
+Moje razmišljanje:
+
+AVG(f.views) = prosek za ovaj konkretan dan+regiju
+AVG(AVG(f.views)) OVER (PARTITION BY category, comments_disabled) = ukupan prosek za tu kategoriju
+Razlika = koliko je ovaj dan bio bolji/gori od proseka kategorije
+
+
+4) Procenat učešća
+
+SUM(f.views) * 100.0 / SUM(SUM(f.views)) OVER (
+    PARTITION BY dr.region, dt.trending_full_date
+) as pct_of_region_views
+
+Logika:
+
+SUM(f.views) = ukupna gledanost ove kategorije tog dana u toj regiji
+SUM(SUM(f.views)) OVER (PARTITION BY regija, dan) = ukupna gledanost SVE kategorije tog dana u toj regiji
+Procenat = koliki deo "pite" zauzima ova kategorija
+
+
+5️⃣ KAKO ODGOVARA NA TVOJE PITANJE
+Original pitanje: "kako se ti proseci razlikuju za videe sa onemogućenim komentarima?"
+Moj odgovor kroz podatke:
+
+Direktno poređenje: Imaću 2 reda za isti dan/kategoriju/regiju - jedan sa comments_disabled=true, drugi sa false
+Numeričko poređenje: Mogu da oduzimam proseke između ovih redova
+Trend analiza: Pokretni prosek pokazuje da li se razlika menja kroz vreme
+Kontekst: Rangiranje i procenti daju širu sliku
+
+category_title | region | trending_full_date | comments_disabled | avg_views | moving_avg_3d | diff_from_category_avg
+Music         | US     | 2023-01-15        | false            | 1,500,000 | 1,400,000     | +200,000
+Music         | US     | 2023-01-15        | true             | 1,200,000 | 1,100,000     | -100,000
+
+Čitanje: Videi u Music kategoriji u US regiji 15. januara:
+
+Sa omogućenim komentarima: 1.5M prosečno views
+Sa onemogućenim komentarima: 1.2M prosečno views
+Zaključak: Onemogućeni komentari = 300k manje views u proseku!
+
+Primer poređenja za isti dan:
+
+2018-01-12 | FR | comments_disabled = f | avg_views = 50,709 | avg_comments = 411.60
+2018-01-12 | FR | comments_disabled = t | avg_views = 4,373  | avg_comments = 0.00
+
+Analiza razlike:
+
+Sa omogućenim komentarima: 50,709 views u proseku
+Sa onemogućenim komentarima: 4,373 views u proseku
+RAZLIKA: ~92% manje views kada su komentari onemogućeni! 📉
+
+🔍 Dodatni insights iz tvog rezultata:
+1. Konzistentan pattern:
+
+Videi sa t (disabled comments) imaju dramatično manje views
+Videi sa t uvek imaju avg_comments = 0.00 (logično!)
+
+2. Rangiranje potvrđuje:
+
+comments_disabled = f → ranks: 3, 18, 19, 23, 24...
+comments_disabled = t → ranks: 70, 72, 74, 75, 76... (dno liste!)
+
+3. Procenat regije:
+
+f → 0.04% do 1.26% učešća
+t → samo 0.00% do 0.01% učešća
+
+
+
+
+
+docker exec youtube-pipeline-project_spark-master_1 spark-submit --master spark://spark-master:7077 --deploy-mode client --packages org.postgresql:postgresql:42.6.0 /opt/airflow/jobs/star_schema/golden_to_star_citus.py
+
+
+
+
+OVO JE NEKI PLAN:
+
+                         LAMBDA (batch + speed) data flow
+
+             ┌───────────────┐            ┌──────────────┐             ┌──────────────┐
+BATCH PATH   │ Kaggle CSV    │ --Python-->│ HDFS RAW     │ --Spark     │ GOLD (Parquet│
+             │ + JSON        │            │ (raw zone)   │  Batch ETL→ │  star schema)│
+             └───────────────┘            └──────────────┘             └───────┬──────┘
+                                                                               │
+                          dim_category / dim_region / dim_channel  (statika)   │
+                                                                               │  (čita Stream kao static DF)
+STREAM PATH  RapidAPI (YouTube) → Kafka topics → Spark Structured Streaming (parse/clean/enrich/join dims/windowing)
+                                                                               │
+                                                                ┌──────────────┴────────────────┐
+                                                                │                               │
+                                                        HDFS PROCESSED (Parquet)        SERVING DB/Engine
+                                                        stream agregati + features      (Citus / ES / Druid)
+                                                                │                               │
+                                                                └───────────────┬───────────────┘
+                                                                                ▼
+                                                                      Unified VIEW (batch ∪ stream)
+                                                                                ▼
+                                                                       Metabase / Superset
+
+(* Spark Stream koristi checkpoints za fault-tolerance)
+
+
+OPIS 2. DELA PROJEKTA:
+
+Šta piše u zadatku
+
+“Potrebno je implementirati do 5 kompleksnih transformacija tokova podataka (stream processors)”
+➡️ To znači da tvoje 5 real-time upita nisu SQL upiti u Metabase-u, nego Spark Structured Streaming transformacije.
+Dakle, pišeš Spark kod koji “u letu” obrađuje tokove (Kafka → Spark → HDFS/DB).
+
+“Potrebno je koristiti spajanje tokova, agregaciju sa upotrebom Windowing-a”
+➡️ To znači da barem jedan deo tvojih transformacija mora imati:
+
+join (npr. spajanje stream-a sa batch dimenzijom ili sa drugim stream-om),
+
+windowing agregaciju (npr. koliko je pregleda u zadnjih 10 minuta, prosečan broj komentara po satu itd.).
+
+“Rezultat obrade smestiti u skladište/bazu po želji (HDFS, Kudu, Druid, ElasticSearch)”
+➡️ Na kraju, rezultat tvoje obrade ne ostaje samo u Spark jobu, nego ga upisuješ u HDFS (Parquet) ili neku bazu (Citus, Druid, ElasticSearch...).
+Onda Metabase/Superset može da vidi te rezultate.
+
+🔹 Šta to znači za tebe
+
+👉 Tih 5 real-time upita = 5 Spark Structured Streaming transformacija.
+Dakle:
+
+Kafka primi podatke sa RapidAPI-ja.
+
+Spark Structured Streaming ih čita i radi transformacije (join, window, agregacija).
+
+Rezultat pišeš u HDFS (processed zona, Parquet) ili neku bazu koju već koristiš (Citus).
+
+Tek onda možeš da pogledaš rezultate kroz SQL/Metabase – ali ključni deo je da si ti napisala tih 5 procesora u Spark kodu.
+
+🔹 Primeri koje možeš da uradiš
+
+Da ti bude jasno, evo mogućih 5 “kompleksnih transformacija”:
+
+Broj novih videa po kategoriji u poslednjih 10 minuta
+(groupBy window(timestamp, "10 minutes"), category → count)
+
+Prosečan broj pregleda po regionu u poslednjih 30 minuta
+(window + avg(viewCount) + join sa dim_region)
+
+Top 5 kanala sa najvećim brojem lajkova u poslednjem satu
+(window + aggregation + orderBy)
+
+Join stream podataka sa batch dimenzijom (npr. category_title iz dim_category)
+→ obogaćuješ stream podatke batch tabelom
+
+Detekcija naglog rasta pregleda (anomaly detection light)
+(npr. ako broj pregleda u prozoru 5 min > 3× proseka u prethodnom satu)
+
+🔹 Ukratko
+
+Ne radiš tih 5 upita u Metabase-u.
+
+Radiš ih u Spark Structured Streaming kodu (to je “implementacija stream processor-a”).
+
+Rezultat se upisuje u HDFS ili bazu.
+
+Ako hoćeš, posle možeš vizualizovati u Metabase-u, ali to nije glavni zadatak – glavni zadatak je pokazati da znaš da koristiš windowing, join i agregacije u streamingu.
+
+
+STA MI JE POTRENO ZA UPITE:
+
+2) Šta ti treba za zadatak (5 kompleksnih procesora)
+
+Predlog konkretnih stream transformacija da pokriješ zahteve:
+
+Window agregacije (tumbling/sliding) po video_id i/ili channel_id: sum/avg views/likes/comments, rate-of-change (delta / minut).
+
+Stream–Stream join: npr. video_stats tok + comments tok po video_id u prozoru (10 min) za engagement spike (koliko komentara stiže dok rastu pregledi).
+
+Watermark + Late events: postavi withWatermark('event_time', '10 minutes') da upravljaš zakašnjenim eventima.
+
+Top-K po kategoriji u prozoru: računaj agregate u mikro-batchu i u foreachBatch odradi rangiranje (window funkcije) → upiši “top_n” rezultat.
+
+Anomalije / speed-to-viral: npr. z-score ili percentil nad views_delta i prag (flaguj “viral_window=1”).
+
+Rezultate piši:
+
+u HDFS (Parquet) u processed/curated (checkpoint obavezno), i
+
+opcionalno upsert u Citus (za Superset/Metabase bez dodatnih engine-a), ili u Elasticsearch/Druid ako želiš baš nisku latencu.
+
+
+
+
+KADA BUDE FRKA SA AIRFLOW-OM:
+
+
+docker exec -it youtube-pipeline-project-postgres-1 psql -U airflow -d postgres
+
+katarina@katarina-Toshiba:~/Desktop/ASVSP/youtube-pipeline-project$ docker exec -it youtube-pipeline-project-postgres-1 psql -U airflow -d template1
+psql (13.22 (Debian 13.22-1.pgdg13+1))
+Type "help" for help.
+
+template1=# DROP DATABASE airflow;
+DROP DATABASE
+template1=# exit
+
+docker logs -f youtube-pipeline-project-postgres-1
+docker compose run --rm airflow-init
+
+katarina@katarina-Toshiba:~/Desktop/ASVSP/youtube-pipeline-project$ docker exec -it youtube-pipeline-project-postgres-1 psql -U airflow -d airflow
+psql (13.22 (Debian 13.22-1.pgdg13+1))
+Type "help" for help.
+
+airflow=# SELECT MAX(id) FROM job;
+ max 
+-----
+   7
+(1 row)
+
+airflow=# ALTER SEQUENCE job_id_seq RESTART WITH 8;
+ALTER SEQUENCE
+airflow=# exit
+katarina@katarina-Toshiba:~/Desktop/ASVSP/youtube-pipeline-project$ docker restart youtube-pipeline-project-airflow-scheduler-1
+youtube-pipeline-project-airflow-scheduler-1
+
+JAKO VAZNO ZA PERMISIJU AKO NE RADI PRVI TASK PA NA DALJE U AIRFLOW-U:
+sudo chmod 666 /var/run/docker.sock
+
+https://awesome-docker-compose.com/apps/analytics/druid
+
+
+
+
+
+
+# 🎯 YouTube Trending Dashboard - Metabase Vodič
+
+## 🔗 KORAK 1: Povezivanje podataka
+
+### 1.1 Dodavanje data source-a
+1. **Otvori Metabase** → Admin Settings (⚙️) → Databases
+2. **Klikni "Add database"**
+3. **Izaberi tip**: 
+   - Ako koristiš **HDFS/Parquet**: "Apache Drill" ili "Presto"
+   - Ako koristiš **PostgreSQL/MySQL**: izaberi odgovarajuću opciju
+4. **Unesi connection details**:
+   ```
+   Host: tvoj-hdfs-host
+   Port: 9000 (ili tvoj port)
+   Database name: "youtube_analytics"
+   ```
+5. **Test connection** → Save
+
+### 1.2 Dodavanje tabela
+Dodaj sve 5 tabela iz tvog koda:
+- `query1_category_region_analysis`
+- `query2_channel_engagement` 
+- `query3_viral_golden_combinations`
+- `query4_problem_analysis`
+- `query5_tag_viral_analysis`
+
+---
+
+## 📊 KORAK 2: Kreiranje Dashboard-a
+
+### 2.1 Novi Dashboard
+1. **Main menu** → Dashboards → **"+ New dashboard"**
+2. **Naziv**: "🎬 YouTube Trending Analytics Dashboard"
+3. **Opis**: "Kompletan pregled trending sadržaja, angažmana i viral faktora"
+
+---
+
+## 🎨 KORAK 3: UPIT 1 - Gledanost po kategorijama i regionima
+
+### Vizualizacija 1A: "📈 Top Kategorije po Gledanosti"
+**Question type**: Bar Chart
+```sql
+SELECT 
+    category_title,
+    SUM(avg_views * video_count) as total_views,
+    AVG(avg_views) as avg_views_per_video,
+    SUM(video_count) as total_videos
+FROM query1_category_region_analysis 
+GROUP BY category_title 
+ORDER BY total_views DESC 
+LIMIT 10
+```
+**Postavke**:
+- **X-axis**: category_title
+- **Y-axis**: total_views
+- **Color**: avg_views_per_video (gradient)
+- **Size**: 6x4 cards
+
+### Vizualizacija 1B: "🌍 Gledanost po Regionima"
+**Question type**: Map (Choropleth)
+```sql
+SELECT 
+    region,
+    AVG(avg_views) as avg_regional_views,
+    COUNT(*) as trending_frequency
+FROM query1_category_region_analysis 
+GROUP BY region
+```
+**Postavke**:
+- **Map column**: region
+- **Metric**: avg_regional_views
+- **Size**: 8x4 cards
+
+### Vizualizacija 1C: "💬 Komentari: Uključeni vs Onemogućeni"
+**Question type**: Donut Chart
+```sql
+SELECT 
+    CASE 
+        WHEN comments_disabled = false THEN 'Komentari Uključeni'
+        ELSE 'Komentari Onemogućeni' 
+    END as comment_status,
+    AVG(avg_views) as avg_views,
+    COUNT(*) as video_count
+FROM query1_category_region_analysis 
+GROUP BY comments_disabled
+```
+**Postavke**:
+- **Dimension**: comment_status
+- **Metric**: video_count
+- **Size**: 4x4 cards
+
+### Vizualizacija 1D: "📅 Trend Kretanje (Poslednja 3 dana)"
+**Question type**: Line Chart
+```sql
+SELECT 
+    trending_full_date,
+    category_title,
+    AVG(moving_avg_views_3d) as moving_average
+FROM query1_category_region_analysis 
+WHERE trending_full_date >= CURRENT_DATE - INTERVAL '7 days'
+GROUP BY trending_full_date, category_title
+ORDER BY trending_full_date
+```
+**Postavke**:
+- **X-axis**: trending_full_date
+- **Y-axis**: moving_average
+- **Series**: category_title
+- **Size**: 12x4 cards
+
+---
+
+## 🚀 KORAK 4: UPIT 2 - Angažman kanala
+
+### Vizualizacija 2A: "🏆 Top Kanali po Angažmanu"
+**Question type**: Table
+```sql
+SELECT 
+    channel_title,
+    category_title,
+    engagement_score,
+    total_videos,
+    avg_engagement_per_video,
+    like_dislike_ratio,
+    rank_in_category
+FROM query2_channel_engagement 
+WHERE rank_in_category <= 3
+ORDER BY category_title, rank_in_category
+```
+**Postavke**:
+- **Kolone za formatiranje**: engagement_score (kao broj), like_dislike_ratio (2 decimale)
+- **Size**: 12x6 cards
+
+### Vizualizacija 2B: "📊 Engagement Score po Kategorijama"
+**Question type**: Bar Chart
+```sql
+SELECT 
+    category_title,
+    AVG(engagement_score) as avg_category_engagement,
+    COUNT(*) as top_channels_count
+FROM query2_channel_engagement 
+GROUP BY category_title 
+ORDER BY avg_category_engagement DESC
+```
+**Postavke**:
+- **X-axis**: category_title (rotate 45°)
+- **Y-axis**: avg_category_engagement
+- **Size**: 8x4 cards
+
+### Vizualizacija 2C: "👍 Like/Dislike Ratio Bubble Chart"
+**Question type**: Scatter Plot
+```sql
+SELECT 
+    channel_title,
+    category_title,
+    engagement_score,
+    like_dislike_ratio,
+    total_videos
+FROM query2_channel_engagement 
+WHERE like_dislike_ratio IS NOT NULL
+```
+**Postavke**:
+- **X-axis**: engagement_score
+- **Y-axis**: like_dislike_ratio  
+- **Size**: total_videos
+- **Color**: category_title
+- **Size**: 8x6 cards
+
+---
+
+## ⚡ KORAK 5: UPIT 3 - Viral "zlatne kombinacije"
+
+### Vizualizacija 3A: "🥇 Zlatne Kombinacije"
+**Question type**: Table (sa uslovima formatiranja)
+```sql
+SELECT 
+    category || ' - ' || region as combination,
+    avg_days_to_trend,
+    avg_trend_days,
+    pct_rank_fastest,
+    pct_rank_longest
+FROM query3_viral_golden_combinations
+ORDER BY pct_rank_fastest, pct_rank_longest DESC
+```
+**Postavke**:
+- **Conditional formatting**: 
+  - pct_rank_fastest < 5: 🟢 zelena
+  - avg_trend_days > 3: 🟡 žuta
+- **Size**: 12x5 cards
+
+### Vizualizacija 3B: "⚡ Brzina vs Trajanje"
+**Question type**: Scatter Plot
+```sql
+SELECT 
+    category,
+    region,
+    avg_days_to_trend,
+    avg_trend_days,
+    category || ' (' || region || ')' as label
+FROM query3_viral_golden_combinations
+```
+**Postavke**:
+- **X-axis**: avg_days_to_trend (obrnut - manji je brži)
+- **Y-axis**: avg_trend_days
+- **Labels**: label
+- **Quadrant lines**: dodati reference linije
+- **Size**: 8x6 cards
+
+---
+
+## ⚠️ KORAK 6: UPIT 4 - Analiza problema
+
+### Vizualizacija 4A: "🚫 Tipovi Problema po Kategorijama"
+**Question type**: Stacked Bar Chart
+```sql
+SELECT 
+    category_title,
+    problem_type,
+    num_videos,
+    CAST(REPLACE(pct_of_local, '%', '') AS FLOAT) as percentage
+FROM query4_problem_analysis
+```
+**Postavke**:
+- **X-axis**: category_title
+- **Y-axis**: percentage
+- **Series**: problem_type
+- **Stack**: Yes
+- **Size**: 12x4 cards
+
+### Vizualizacija 4B: "🌍 Problemi po Regionima"
+**Question type**: Heatmap
+```sql
+SELECT 
+    region,
+    problem_type,
+    CAST(REPLACE(pct_of_local, '%', '') AS FLOAT) as percentage
+FROM query4_problem_analysis
+```
+**Postavke**:
+- **Rows**: region
+- **Columns**: problem_type
+- **Cell values**: percentage
+- **Color scale**: Crvena (visok %) → Zelena (nizak %)
+- **Size**: 8x6 cards
+
+---
+
+## 🏷️ KORAK 7: UPIT 5 - Tag analiza
+
+### Vizualizacija 5A: "🏆 Top 15 Viral Tagova"
+**Question type**: Horizontal Bar Chart
+```sql
+SELECT 
+    tag,
+    viral_score,
+    video_count,
+    viral_success_rate
+FROM query5_tag_viral_analysis 
+LIMIT 15
+```
+**Postavke**:
+- **Y-axis**: tag
+- **X-axis**: viral_score
+- **Color gradient**: viral_success_rate
+- **Size**: 6x8 cards
+
+### Vizualizacija 5B: "📈 Tag Performance Matrix"
+**Question type**: Scatter Plot
+```sql
+SELECT 
+    tag,
+    video_count,
+    avg_likes,
+    viral_success_rate,
+    regions_count + categories_count as diversity_score
+FROM query5_tag_viral_analysis
+```
+**Postavke**:
+- **X-axis**: video_count
+- **Y-axis**: avg_likes
+- **Size**: viral_success_rate
+- **Color**: diversity_score
+- **Labels**: tag (samo top 10)
+- **Size**: 8x6 cards
+
+### Vizualizacija 5C: "🎯 Viral Success Rate"
+**Question type**: Gauge/Meter Charts (multiple)
+```sql
+SELECT 
+    tag,
+    viral_success_rate
+FROM query5_tag_viral_analysis 
+ORDER BY viral_success_rate DESC 
+LIMIT 6
+```
+**Postavke**:
+- **6 gauge charts** u grid-u (2x3)
+- **Range**: 0-100%
+- **Color zones**: 
+  - 0-20%: 🔴 Crvena
+  - 20-50%: 🟡 Žuta  
+  - 50%+: 🟢 Zelena
+- **Size**: 8x4 cards
+
+---
+
+## 🎨 KORAK 8: Dashboard Layout & Styling
+
+### 8.1 Header Section
+```
+[🎬 YouTube Trending Analytics Dashboard - Company Logo]
+[Date Range Filter] [Region Filter] [Category Filter]
+```
+
+### 8.2 Layout raspored (12-column grid):
+```
+Row 1: [Header - 12 cols]
+Row 2: [Key Metrics Cards - 4x3 cols] 
+Row 3: [Upit 1: Gledanost Charts - 6+6 cols]
+Row 4: [Upit 2: Engagement Charts - 4+8 cols]
+Row 5: [Upit 3: Viral Analysis - 8+4 cols]
+Row 6: [Upit 4: Problems - 12 cols]
+Row 7: [Upit 5: Tags - 6+6 cols]
+```
+
+### 8.3 Color Scheme
+- **Primary**: #FF0000 (YouTube Red)
+- **Secondary**: #282828 (Dark Gray)
+- **Success**: #00C851 (Green)
+- **Warning**: #FF8800 (Orange)
+- **Info**: #33B5E5 (Blue)
+
+---
+
+## 📱 KORAK 9: Interaktivnost i Filters
+
+### 9.1 Global Filters (gore)
+1. **Date Range**: trending_full_date
+2. **Region**: multi-select dropdown
+3. **Category**: multi-select dropdown
+
+### 9.2 Cross-filtering
+- Klik na kategoriju → filtrira sve ostale vizualizacije
+- Klik na region → pokazuje samo taj region
+- Hover effects na svim chart-ovima
+
+### 9.3 Drill-down akcije
+- **Bar charts**: klik → detaljni view
+- **Tables**: klik na red → channel/video details
+- **Maps**: klik na zemlju → regional breakdown
+
+---
+
+## 🚀 KORAK 10: Finalna optimizacija
+
+### 10.1 Performance
+- **Cache settings**: 24h za statičke podatke
+- **Auto-refresh**: svakih 6 sati
+- **Query optimization**: indeksi na ključnim poljima
+
+### 10.2 Mobile responsiveness
+- **Card sizing**: responsive units
+- **Text scaling**: readable na malim ekranima
+- **Touch-friendly**: veći clickable elementi
+
+### 10.3 Export opcije
+- **PDF export**: executive summary format
+- **Excel export**: raw data za analitiku
+- **Email subscriptions**: dnevni/nedeljni report
+
+---
+
+## 🎯 BONUS: Key Performance Indicators (KPIs)
+
+Dodaj na vrh dashboard-a **4 KPI kartice**:
+
+1. **📊 Total Trending Videos**: `COUNT(*)`
+2. **👀 Average Views**: `AVG(views)`  
+3. **🚀 Viral Success Rate**: `% sa >100K likes`
+4. **🌍 Global Reach**: `COUNT(DISTINCT region)`
+
+---
+
+## ✅ Final Checklist
+
+- [ ] Svi upiti uspešno povezani
+- [ ] Vizualizacije responsive
+- [ ] Filteri funkcionalni
+- [ ] Color scheme konzistentan
+- [ ] Mobile-friendly
+- [ ] Performance optimizovan
+- [ ] Cross-filtering enabled
+- [ ] Export opcije konfigurisane
+
+**🎉 Tvoj YouTube Trending Dashboard je spreman za produkciju!**

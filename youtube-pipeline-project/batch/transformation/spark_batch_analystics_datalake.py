@@ -14,16 +14,6 @@ spark = SparkSession.builder \
     .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
     .getOrCreate()
 
-# =====================================================
-# JDBC konekcija za Postgres
-# =====================================================
-
-pg_url = "jdbc:postgresql://postgres:5432/airflow"  # 'postgres' je ime servisa iz docker-compose
-pg_properties = {
-    "user": "airflow",
-    "password": "airflow",
-    "driver": "org.postgresql.Driver"
-}
 
 # =====================================================
 # 📊 UČITAVANJE PODATAKA IZ DATA LAKE
@@ -88,12 +78,7 @@ query1_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/curated/query1_category_region_analysis"
 )
 
-# Zapis u Postgres
-query1_result.write.mode("overwrite").jdbc(
-    pg_url,
-    "query1_category_region_analysis",
-    properties=pg_properties
-)
+
 
 # =====================================================
 # 🔍 UPIT 2: Koje kategorije i kanali ostvaruju najveći angažman korisnika?  
@@ -148,12 +133,6 @@ query2_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/curated/query2_channel_engagement"
 )
 
-# Zapis u Postgres
-query2_result.write.mode("overwrite").jdbc(
-    pg_url,
-    "query2_channel_engagement",
-    properties=pg_properties
-)
 
 # =====================================================
 # 🔍 UPIT 3: Koje YouTube kategorije i regioni su top 10% najbržih viralnih videa i istovremeno među top 10% po trajanju na trending listi?
@@ -208,13 +187,6 @@ print("📊 Rezultati UPIT 3 - Zlatne kombinacije:")
 query3_result.show(20, truncate=False)
 query3_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/curated/query3_viral_golden_combinations"
-)
-
-# Zapis u Postgres
-query3_result.write.mode("overwrite").jdbc(
-    pg_url,
-    "query3_viral_golden_combinations",
-    properties=pg_properties
 )
 
 
@@ -278,12 +250,7 @@ query4_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/curated/query4_problem_analysis"
 )
 
-# Zapis u Postgres
-query4_result.write.mode("overwrite").jdbc(
-    pg_url,
-    "query4_problem_analysis",
-    properties=pg_properties
-)
+
 
 
 # =====================================================
@@ -348,12 +315,7 @@ query5_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/curated/query5_tag_viral_analysis"
 )
 
-# Zapis u Postgres
-query5_result.write.mode("overwrite").jdbc(
-    pg_url,
-    "query5_tag_viral_analysis",
-    properties=pg_properties
-)
+
 
 # =====================================================
 # 🔍 UPIT 6: Koje tagove, pored osnovne popularnosti, karakteriše najbolja kombinacija viralnog potencijala i tržišne pozicije, 
@@ -502,6 +464,8 @@ query7_result.coalesce(1).write.mode("overwrite").parquet(
 print("\n🔍 UPIT 8: Optimalna kombinacija opisa i thumbnail kvaliteta...")
 
 query8_result = spark.sql("""
+SET max_parallel_workers_per_gather = 0
+SET parallel_tuple_cost = 1000000    
 WITH content_analysis AS (
     SELECT 
         video_id,
