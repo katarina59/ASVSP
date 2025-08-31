@@ -1,4 +1,3 @@
-# convert_to_avro.py
 import json
 from pyspark.sql import SparkSession # type: ignore
 from pyspark.sql.functions import col # type: ignore
@@ -38,7 +37,6 @@ RUvideos_df.write.format("avro").mode("overwrite").save("hdfs://namenode:9000/st
 USvideos_df = spark.read.option("header", True).csv("hdfs://namenode:9000/data/raw/USvideos.csv")
 USvideos_df.write.format("avro").mode("overwrite").save("hdfs://namenode:9000/storage/hdfs/raw/avro/USvideos")
 
-# Lista fajlova - možeš ih i ručno navesti ili izlistati iz HDFS ako imaš pristup
 json_files = [
     "hdfs://namenode:9000/data/raw/CA_category_id.json",
     "hdfs://namenode:9000/data/raw/US_category_id.json",
@@ -61,13 +59,10 @@ for json_path in json_files:
     json_obj = json.loads(json_str)
     items = json_obj['items']
 
-    # Kreiraj RDD od stringova JSON pojedinačnih objekata
     rdd = spark.sparkContext.parallelize(items).map(lambda x: json.dumps(x))
 
-    # Napravi DataFrame od RDD
     df = spark.read.json(rdd)
 
-    # Odaberi željene kolone
     df_selected = df.select(
         col("id").alias("category_id"),
         col("snippet.title").alias("title"),
@@ -76,8 +71,6 @@ for json_path in json_files:
 
     df_selected.show(truncate=False)
 
-    # Snimanje u Avro format u folder koji odgovara imenu fajla, npr:
-    # za CA_category_id.json -> snima u hdfs://namenode:9000/storage/hdfs/raw/avro/CA_category_id
     filename = json_path.split("/")[-1].replace(".json", "")
     output_path = f"hdfs://namenode:9000/storage/hdfs/raw/avro/{filename}"
 
