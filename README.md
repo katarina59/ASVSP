@@ -35,17 +35,18 @@ Creating a system that enables content creators and marketers to understand:
 │                  DATA LAKE (3 ZONES)                              │
 ├─────────────────────┬─────────────────┬───────────────────────────┤
 │    RAW ZONE         │   TRANSFORMATION│     CURATED ZONE          │
-│  - Original         │   ZONE          │  - Golden dataset         │
+│  - Original         │   ZONE          │                           │
 │    data             │  - Cleaned      │  - Aggregated views       │
 │  - Parquet format   │    data         │  - Business metrics       │
-│  - Partitioned      │  - Validated    │  - Optimized              │
+│  - Partitioned      │  - Validated    |  - Writing queries        |
+|                     |  -Golden dataset│  - Saving resuts into DB  │
 └─────────────────────┴─────────────────┴───────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                 PROCESSING ENGINES                              │
 ├─────────────────────┬───────────────────────────────────────────┤
-│   Apache Spark      │        Kafka Streams                      │
+│   Apache Spark      │        Spark Structed Streaming           │
 │   (Batch Analytics) │     (Real-time Processing)                │
 └─────────────────────┴───────────────────────────────────────────┘
                               │
@@ -53,7 +54,7 @@ Creating a system that enables content creators and marketers to understand:
 ┌─────────────────────────────────────────────────────────────────┐
 │                 PRESENTATION LAYER                              │
 ├─────────────────────┬───────────────────────────────────────────┤
-│    Dashboards       │         Alerts and Reports                │
+│    Dashboards       │         Saved into HDFS                   │
 │   (Visualizations)  │        (Real-time Insights)               │
 └─────────────────────┴───────────────────────────────────────────┘
 ```
