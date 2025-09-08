@@ -1,9 +1,6 @@
 from pyspark.sql import SparkSession # type: ignore
 from pyspark.sql.types import * # type: ignore
 
-# =====================================================
-# 🔥 KREIRANJE SPARK SESIJE
-# =====================================================
 spark = SparkSession.builder \
     .appName("Ingesting queries into Postgres") \
     .config("spark.sql.adaptive.enabled", "true") \

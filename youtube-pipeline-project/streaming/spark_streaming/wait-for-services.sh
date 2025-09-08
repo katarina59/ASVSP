@@ -1,40 +1,24 @@
 #!/bin/bash
 set -e
 
-echo "🔄 Čekam da servisi budu spremni..."
+echo "Čekam da servisi budu spremni..."
 
 # Čekaj Kafka
-echo "⏳ Čekam Kafka..."
+echo "Čekam Kafka..."
 while ! nc -z kafka 9092; do
   sleep 5
 done
-echo "✅#!/bin/bash
-set -e
+echo "Kafka spreman!"
 
-echo "🔄 Čekam da servisi budu spremni..."
-
-# Čekaj Kafka
-echo "⏳ Čekam Kafka..."
-while ! nc -z kafka 9092; do
-  sleep 5
-done
-echo "✅ Kafka spreman!"
-
-# Čekaj PostgreSQL
-echo "⏳ Čekam PostgreSQL..."
-while ! nc -z postgres 5432; do
-  sleep 5
-done
-echo "✅ PostgreSQL spreman!"
 
 # Čekaj Spark Master
-echo "⏳ Čekam Spark Master..."
+echo "Čekam Spark Master..."
 while ! nc -z spark-master 7077; do
   sleep 5
 done
-echo "✅ Spark Master spreman!"
+echo "Spark Master spreman!"
 
-echo "🚀 Svi servisi spremni - pokretam Spark Streaming..."
+echo "Svi servisi spremni - pokrećem Spark Streaming..."
 
 # Pokreni Spark aplikaciju
 spark-submit \
