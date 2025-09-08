@@ -114,7 +114,6 @@ The system follows a modern big data architecture with containerized microservic
 - Missing value handling
 - Converted to Parquet
 - Duplicate removal  
-- Schema validation
 - Data quality checks
 - Standardization of formats
 
