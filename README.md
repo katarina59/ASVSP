@@ -106,7 +106,7 @@ The system follows a modern big data architecture with containerized microservic
 **Content**: Raw data from both Kaggle dataset and streaming API exactly as received
 
 ### 🔄 Zone 2: Transformation Zone  
-**Location**: `hdfs://namenode:9000/storage/hdfs/processed/`
+**Location**: `hdfs://namenode:9000/storage/hdfs/processed/golden_dataset/`
 
 **Purpose**: Data cleaning, validation, and standardization
 **Operations**: 
@@ -118,15 +118,13 @@ The system follows a modern big data architecture with containerized microservic
 - Standardization of formats
 
 ### 🎯 Zone 3: Curated Zone (Golden Dataset)
-**Location**: `hdfs://namenode:9000/storage/hdfs/processed/golden_dataset/`
+**Location**: `hdfs://namenode:9000/storage/hdfs/processed/`
 
 **Purpose**: Business-ready, analytics-optimized data
 **Features**:
-- Enriched with calculated metrics
-- Optimized for analytical queries
-- Standardized dimensions and measures
-- Fact and dimension tables
-- Pre-aggregated metrics for common queries
+- SQL queries executed against golden datasets
+- Results stored in PostgreSQL database tables
+- Automated ETL pipelines for data warehouse population
 
 ## 📊 Analytical Questions
 
