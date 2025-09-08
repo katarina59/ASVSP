@@ -13,7 +13,7 @@ Creating a system that enables content creators and marketers to understand:
 - Regional differences in content consumption
 
 ## 🏗️ System Architecture
-
+<img width="755" height="799" alt="image" src="https://github.com/user-attachments/assets/90096dec-a789-4839-b0c4-96f5d70d4085" />
 The system follows a modern big data architecture with containerized microservices, implementing a three-tier data lake approach with both batch and streaming processing capabilities.
 
 **Data Flow:**
@@ -83,10 +83,6 @@ The system follows a modern big data architecture with containerized microservic
 - Standardized dimensions and measures
 - Fact and dimension tables
 - Pre-aggregated metrics for common queries
-
-## 🏗️ System architecture
-<img width="755" height="799" alt="image" src="https://github.com/user-attachments/assets/90096dec-a789-4839-b0c4-96f5d70d4085" />
-
 
 ## 📊 Analytical Questions
 
