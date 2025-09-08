@@ -46,7 +46,7 @@ Creating a system that enables content creators and marketers to understand:
 ┌─────────────────────────────────────────────────────────────────┐
 │                 PROCESSING ENGINES                              │
 ├─────────────────────┬───────────────────────────────────────────┤
-│   Apache Spark      │        Spark Structed Streaming           │
+│   Apache Spark      │     Spark Structed Streaming              │
 │   (Batch Analytics) │     (Real-time Processing)                │
 └─────────────────────┴───────────────────────────────────────────┘
                               │
@@ -54,7 +54,7 @@ Creating a system that enables content creators and marketers to understand:
 ┌─────────────────────────────────────────────────────────────────┐
 │                 PRESENTATION LAYER                              │
 ├─────────────────────┬───────────────────────────────────────────┤
-│    Dashboards       │         Saved into HDFS                   │
+│    Dashboards       │             Database                      │
 │   (Visualizations)  │        (Real-time Insights)               │
 └─────────────────────┴───────────────────────────────────────────┘
 ```
