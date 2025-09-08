@@ -38,7 +38,7 @@ with DAG(
     ingest_raw = BashOperator(
     task_id="ingest_raw",
     bash_command=(
-        "docker exec spark_master "
+        "docker exec spark-master "
         "spark-submit "
         "--master spark://spark-master:7077 "
         "--deploy-mode client "
@@ -64,7 +64,7 @@ with DAG(
     transform_golden = BashOperator(
         task_id="transform_golden",
         bash_command=(
-            "docker exec spark_master "
+            "docker exec spark-master "
             "spark-submit "
             "--master spark://spark-master:7077 "
             "--deploy-mode client "
@@ -91,7 +91,7 @@ with DAG(
     spark_batch_analystics = BashOperator(
         task_id="spark_batch_analystics",
         bash_command=(
-            "docker exec spark_master "
+            "docker exec spark-master "
             "spark-submit "
             "--master spark://spark-master:7077 "
             "--deploy-mode client "

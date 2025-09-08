@@ -1,5 +1,5 @@
 import os
-from pyspark.sql import SparkSession # type: ignore
+from pyspark.sql import SparkSession, Window # type: ignore
 import pyspark.sql.functions as F # type: ignore
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, LongType, BooleanType, DoubleType # type: ignore
 import datetime 
@@ -207,138 +207,6 @@ def print_stream_data(df, epoch_id, stream_name):
     else:
         print("Nema novih podataka u ovom batch-u")
 
-#upit 1
-
-# def create_channel_performance_stream(video_details_basic):
-#     channel_performance = video_details_basic \
-#         .withWatermark("details_timestamp", "30 seconds") \
-#         .groupBy(
-#             F.window(F.col("details_timestamp"), "1 minute"),
-#             "channel_title", "category"
-#         ) \
-#         .agg(
-#             F.count("*").alias("videos_count"),
-#             F.sum("view_count").alias("total_views"),
-#             F.avg("view_count").alias("avg_views_per_video"),
-#             F.sum("like_count").alias("total_likes"),
-#             F.avg("like_count").alias("avg_likes_per_video")
-#         ) \
-#         .withColumn("engagement_rate", 
-#                    F.col("total_likes") / F.greatest(F.col("total_views"), F.lit(1)) * 100)
-    
-#     channel_query = channel_performance.writeStream \
-#         .outputMode("update") \
-#         .trigger(processingTime='20 seconds') \
-#         .foreachBatch(lambda df, epoch_id: 
-#             print(f"\n TOP CHANNELS PERFORMANCE - Epoch {epoch_id}") or
-#             df.orderBy(F.desc("total_views")) \
-#               .select("window.start", "channel_title", "category", 
-#                      "videos_count", "total_views", "avg_views_per_video", "engagement_rate") \
-#               .show(10, truncate=False) or
-#             print("="*120)
-#         ) \
-#         .start()
-    
-#     return channel_query
-
-
-
-#upit 2
-def create_category_trends_stream(video_details_basic):
-    category_trends = video_details_basic \
-        .withWatermark("details_timestamp", "30 seconds") \
-        .groupBy(
-            F.window(F.col("details_timestamp"), "1 minute"),
-            "category"
-        ) \
-        .agg(
-            F.count("*").alias("videos_count"),
-            F.avg("view_count").alias("avg_views"),
-            F.avg("like_count").alias("avg_likes"),
-            F.avg("length_seconds").alias("avg_duration"),
-            F.approx_count_distinct("channel_id").alias("unique_channels")
-        ) \
-        .withColumn("popularity_score", 
-                   (F.col("avg_views") + F.col("avg_likes") * 10) / F.greatest(F.col("videos_count"), F.lit(1)))
-    
-    category_query = category_trends.writeStream \
-        .outputMode("update") \
-        .trigger(processingTime='25 seconds') \
-        .foreachBatch(lambda df, epoch_id: 
-            print(f"\n CATEGORY TRENDS - Epoch {epoch_id}") or
-            df.orderBy(F.desc("popularity_score")) \
-              .select("window.start", "category", "videos_count", 
-                     "avg_views", "avg_duration", "unique_channels", "popularity_score") \
-              .show(10, truncate=False) or
-            print("="*100)
-        ) \
-        .start()
-    
-    return category_query
-
-
-#upit 3
-def create_viral_potential_stream(video_details_basic):
-    viral_potential = video_details_basic \
-        .withWatermark("details_timestamp", "30 seconds") \
-        .filter(F.col("view_count") > 10000) \
-        .withColumn("views_per_minute", F.col("view_count") / F.greatest(F.col("length_seconds") / 60, F.lit(1))) \
-        .withColumn("like_ratio", F.col("like_count") / F.greatest(F.col("view_count"), F.lit(1)) * 100) \
-        .withColumn("viral_score", 
-                   F.col("views_per_minute") * 0.3 + 
-                   F.col("like_ratio") * 20 + 
-                   F.col("countries_count") * 0.1) \
-        .filter(F.col("viral_score") > 50)
-    
-    viral_query = viral_potential.writeStream \
-        .outputMode("append") \
-        .trigger(processingTime='15 seconds') \
-        .foreachBatch(lambda df, epoch_id: 
-            print(f"\n VIRAL POTENTIAL DETECTED - Epoch {epoch_id}") or
-            df.orderBy(F.desc("viral_score")) \
-              .select("title", "channel_title", "view_count", "like_count", 
-                     "views_per_minute", "like_ratio", "viral_score") \
-              .show(5, truncate=False) or
-            print("="*100)
-        ) \
-        .start()
-    
-    return viral_query
-
-
-#uput 4
-def create_geo_analysis_stream(video_details_basic):
-    geo_analysis = video_details_basic \
-        .withWatermark("details_timestamp", "30 seconds") \
-        .groupBy(
-            F.window(F.col("details_timestamp"), "2 minutes"),
-            "countries_count"
-        ) \
-        .agg(
-            F.count("*").alias("videos_count"),
-            F.avg("view_count").alias("avg_views"),
-            F.collect_list("title").alias("video_titles")
-        ) \
-        .withColumn("global_reach", 
-                   F.when(F.col("countries_count") > 200, "Global")
-                    .when(F.col("countries_count") > 100, "Wide")
-                    .when(F.col("countries_count") > 50, "Regional")
-                    .otherwise("Local"))
-    
-    geo_query = geo_analysis.writeStream \
-        .outputMode("update") \
-        .trigger(processingTime='30 seconds') \
-        .foreachBatch(lambda df, epoch_id: 
-            print(f"\n GEO DISTRIBUTION - Epoch {epoch_id}") or
-            df.orderBy(F.desc("countries_count")) \
-              .select("window.start", "global_reach", "countries_count", 
-                     "videos_count", "avg_views") \
-              .show(10, truncate=False) or
-            print("="*100)
-        ) \
-        .start()
-    
-    return geo_query
 
 # def load_batch_context_data(spark):
 #     """Učitava kontekstualne podatke iz batch obrade"""
@@ -852,389 +720,86 @@ def create_category_summary_stream(video_details_basic, spark):
     return category_query
 
 
+# UPIT 3:
 
-# UPIT 3
-def create_regional_performance_stream(video_details_basic, spark):
+def create_realtime_breakout_engagement(trending_prepared, spark):
     """
-    Kreira real-time stream koji poredi trenutne performanse regiona 
-    sa istorijskim batch podacima
+    Real-time breakout engagement analiza (bez category_title):
+    - poredi realtime engagement sa batch istorijom (query2_channel_engagement)
+    - koristi windowing i analitičke funkcije
     """
-    
-    # Učitaj regionalne baseline podatke iz batch analize
-    regional_baseline = spark.read.jdbc(
-        pg_url, 
-        "query1_category_region_analysis", 
+
+    # 1. Učitaj batch podatke iz Postgres (Query 2: channel engagement)
+    batch_engagement = spark.read.jdbc(
+        url=pg_url,
+        table="query2_channel_engagement",
         properties=pg_properties
-    ).groupBy("region").agg(
-        F.avg("avg_views").alias("historical_avg_views"),
-        F.avg("avg_comments").alias("historical_avg_comments"),
-        F.count("*").alias("historical_video_count"),
-        F.max("avg_views").alias("historical_peak_views")
+    ).select(
+        "channel_title",
+        "engagement_score",
+        "avg_engagement_per_video",
+        "rank_in_category"
     )
-    
-    # KORAK 2: Mapiranje zemalja na regione (simplifikovano)
-    country_to_region_map = {
-        # Severna Amerika
-        "US": "North America", "CA": "North America", "MX": "North America",
-        # Evropa  
-        "GB": "Europe", "DE": "Europe", "FR": "Europe", "IT": "Europe", 
-        "ES": "Europe", "NL": "Europe", "PL": "Europe", "RU": "Europe",
-        "SE": "Europe", "NO": "Europe", "FI": "Europe", "DK": "Europe",
-        # Azija
-        "JP": "Asia", "KR": "Asia", "CN": "Asia", "IN": "Asia", 
-        "TH": "Asia", "VN": "Asia", "PH": "Asia", "ID": "Asia",
-        # Južna Amerika
-        "BR": "South America", "AR": "South America", "CL": "South America",
-        "CO": "South America", "PE": "South America",
-        # Ostalo
-        "AU": "Oceania", "NZ": "Oceania",
-        "ZA": "Africa", "NG": "Africa", "EG": "Africa"
-    }
-    
-    # Registruj UDF za mapiranje zemalja u regione
-    def map_countries_to_regions(countries_array):
-        if not countries_array:
-            return []
-        regions = set()
-        for country in countries_array:
-            if country in country_to_region_map:
-                regions.add(country_to_region_map[country])
-        return list(regions)
-    
-    map_countries_udf = F.udf(map_countries_to_regions, ArrayType(StringType()))
-    
-    # KORAK 3: Transformiši real-time podatke
-    regional_stream = video_details_basic \
-        .withWatermark("details_timestamp", "1 minute") \
-        .withColumn("detected_regions", map_countries_udf(F.col("available_countries"))) \
-        .withColumn("region", F.explode(F.col("detected_regions"))) \
-        .groupBy(
-            F.window(F.col("details_timestamp"), "3 minutes", "1 minute"),
-            "region"
-        ) \
-        .agg(
-            F.count("*").alias("current_videos"),
-            F.avg("view_count").alias("current_avg_views"),
-            F.avg("like_count").alias("current_avg_likes"),
-            F.avg("countries_count").alias("avg_global_reach"),
-            F.approx_count_distinct("category").alias("category_diversity"),
-            F.collect_list("title").alias("recent_titles"),
-            F.max("view_count").alias("peak_views_now"),
-            F.stddev("view_count").alias("views_volatility")
-        )
-    
-    # KORAK 4: Stream sa poređenjem protiv baseline-a
-    def process_regional_comparison(df, epoch_id):
-        print(f"\n REGIONAL PERFORMANCE COMPARISON - Epoch {epoch_id}")
-        print("="*100)
-        
-        if df.count() == 0:
-            print("No data in this batch")
-            return
-            
-        # Join sa baseline podacima
-        comparison_df = df.join(
-            regional_baseline.hint("broadcast"), 
-            on="region", 
-            how="left"
-        ).withColumn(
-            "performance_vs_history",
-            F.when(F.col("historical_avg_views").isNull(), "NEW_REGION")
-            .when(F.col("current_avg_views") > F.col("historical_avg_views") * 1.5, "SURGING")
-            .when(F.col("current_avg_views") > F.col("historical_avg_views") * 1.2, "GROWING") 
-            .when(F.col("current_avg_views") > F.col("historical_avg_views") * 0.8, "STABLE")
-            .when(F.col("current_avg_views") > F.col("historical_avg_views") * 0.5, "DECLINING")
-            .otherwise("STRUGGLING")
-        ).withColumn(
-            "growth_percentage",
-            F.when(F.col("historical_avg_views") > 0,
-                F.round(((F.col("current_avg_views") - F.col("historical_avg_views")) 
-                        / F.col("historical_avg_views")) * 100, 1)
-            ).otherwise(None)
-        ).withColumn(
-            "market_position",
-            F.when(F.col("current_avg_views") > 1000000, "PREMIUM")
-            .when(F.col("current_avg_views") > 500000, "HIGH_VALUE") 
-            .when(F.col("current_avg_views") > 100000, "SOLID")
-            .when(F.col("current_avg_views") > 50000, "EMERGING")
-            .otherwise("DEVELOPING")
-        )
-        
-        # Prikaz rezultata
-        print("\n REGIONAL PERFORMANCE DASHBOARD:")
-        comparison_df.select(
-            "region",
-            "performance_vs_history",
-            "market_position", 
-            F.col("current_videos").alias("videos_now"),
-            F.col("current_avg_views").alias("avg_views_now"),
-            F.col("historical_avg_views").alias("historical_avg"),
-            "growth_percentage",
-            F.col("category_diversity").alias("categories"),
-            F.col("avg_global_reach").alias("global_reach")
-        ).orderBy(F.desc("current_avg_views")).show(15, truncate=False)
-        
-        # Detaljne insights
-        print("\n KEY INSIGHTS:")
-        
-        # Top performers
-        top_regions = comparison_df.filter(
-            F.col("performance_vs_history").isin("SURGING", "GROWING")
-        ).count()
-        
-        struggling_regions = comparison_df.filter(
-            F.col("performance_vs_history").isin("STRUGGLING", "DECLINING")  
-        ).count()
-        
-        new_regions = comparison_df.filter(
-            F.col("performance_vs_history") == "NEW_REGION"
-        ).count()
-        
-        print(f"  • Regions outperforming history: {top_regions}")
-        print(f"  • Regions underperforming: {struggling_regions}") 
-        print(f"  • New regions detected: {new_regions}")
-        
-        # Content diversity analysis
-        diversity_stats = comparison_df.agg(
-            F.avg("category_diversity").alias("avg_diversity"),
-            F.max("category_diversity").alias("max_diversity")
-        ).collect()[0]
-        
-        print(f"  • Average category diversity: {diversity_stats['avg_diversity']:.1f}")
-        print(f"  • Highest category diversity: {diversity_stats['max_diversity']}")
-        
-        # Global reach insights
-        global_reach_stats = comparison_df.agg(
-            F.avg("avg_global_reach").alias("avg_reach"),
-            F.max("avg_global_reach").alias("max_reach")
-        ).collect()[0]
-        
-        print(f"  • Average global reach: {global_reach_stats['avg_reach']:.0f} countries")
-        print(f"  • Maximum global reach: {global_reach_stats['max_reach']:.0f} countries")
-        
-        print("\n" + "="*100)
-    
-    # KORAK 5: Kreiraj stream
-    regional_query = regional_stream.writeStream \
-        .outputMode("update") \
-        .trigger(processingTime='45 seconds') \
-        .foreachBatch(process_regional_comparison) \
-        .start()
-    
-    return regional_query
 
-
-def create_trend_analysis_stream(video_details_basic, spark):
-    """
-    Dodatni stream za dublje analize trendova po regionima
-    """
-    
-    # Mapiranje kao gore (možeš izdvojiti u pomocnu funkciju)
-    country_to_region_map = {
-        "US": "North America", "CA": "North America", "MX": "North America",
-        "GB": "Europe", "DE": "Europe", "FR": "Europe", "IT": "Europe", 
-        "ES": "Europe", "NL": "Europe", "PL": "Europe", "RU": "Europe",
-        "JP": "Asia", "KR": "Asia", "CN": "Asia", "IN": "Asia",
-        "BR": "South America", "AR": "South America", "CL": "South America",
-        "AU": "Oceania", "NZ": "Oceania"
-    }
-    
-    def map_countries_to_regions(countries_array):
-        if not countries_array:
-            return []
-        regions = set()
-        for country in countries_array:
-            if country in country_to_region_map:
-                regions.add(country_to_region_map[country])
-        return list(regions)
-    
-    map_countries_udf = F.udf(map_countries_to_regions, ArrayType(StringType()))
-    
-    trend_analysis = video_details_basic \
-        .withWatermark("details_timestamp", "2 minutes") \
-        .withColumn("detected_regions", map_countries_udf(F.col("available_countries"))) \
-        .withColumn("region", F.explode(F.col("detected_regions"))) \
-        .withColumn("hour", F.hour("details_timestamp")) \
-        .groupBy(
-            F.window(F.col("details_timestamp"), "5 minutes", "2 minutes"),
-            "region",
-            "hour"
-        ) \
-        .agg(
-            F.count("*").alias("hourly_videos"),
-            F.avg("view_count").alias("hourly_avg_views"),
-            F.sum("like_count").alias("total_likes"),
-            F.approx_count_distinct("channel_title").alias("unique_channels"),
-            F.avg("length_seconds").alias("avg_duration"),
-            F.sum(F.when(F.col("is_shorts_eligible"), 1).otherwise(0)).alias("shorts_count"),
-            F.sum(F.when(F.col("is_live_content"), 1).otherwise(0)).alias("live_count")
-        ) \
-        .withColumn("shorts_ratio", 
-                   F.round(F.col("shorts_count") / F.col("hourly_videos") * 100, 1))
-    
-    def process_trend_analysis(df, epoch_id):
-        print(f"\n HOURLY TREND ANALYSIS - Epoch {epoch_id}")
-        print("="*80)
-        
-        if df.count() == 0:
-            print("No trend data available")
-            return
-            
-        # Analiza po satima
-        hourly_summary = df.groupBy("hour").agg(
-            F.sum("hourly_videos").alias("total_videos"),
-            F.avg("hourly_avg_views").alias("avg_views_per_hour"),
-            F.sum("unique_channels").alias("total_channels")
-        ).orderBy("hour")
-        
-        print("\n HOURLY ACTIVITY PATTERN:")
-        hourly_summary.show(24, truncate=False)
-        
-        # Top performing regioni u ovom trenutku  
-        print("\n TOP PERFORMING REGIONS THIS PERIOD:")
-        df.select("region", "hourly_videos", "hourly_avg_views", 
-                 "unique_channels", "shorts_ratio") \
-          .orderBy(F.desc("hourly_avg_views")) \
-          .show(10, truncate=False)
-    
-    trend_query = trend_analysis.writeStream \
-        .outputMode("update") \
-        .trigger(processingTime='60 seconds') \
-        .foreachBatch(process_trend_analysis) \
-        .start()
-    
-    return trend_query
-
-
-
-#upit 2 - trending
-def create_content_type_analysis(trending_prepared):
-    content_analysis = trending_prepared \
+    # 2. Real-time agregacija (prozor 15 minuta po kanalu)
+    realtime_windowed = trending_prepared \
         .withWatermark("trending_timestamp", "20 minutes") \
         .groupBy(
             F.window(F.col("trending_timestamp"), "15 minutes"),
-            "content_type"
-        ) \
-        .agg(
-            F.count("*").alias("videos_count"),
-            F.avg("view_count_parsed").alias("avg_views"),
-            F.avg("duration_seconds").alias("avg_duration_seconds"),
-            F.max("view_count_parsed").alias("max_views"),
-            F.min("view_count_parsed").alias("min_views")
-        ) \
-        .withColumn("duration_category",
-                   F.when(F.col("avg_duration_seconds") < 60, "Short (<1min)")
-                    .when(F.col("avg_duration_seconds") < 300, "Medium (1-5min)")
-                    .when(F.col("avg_duration_seconds") < 1800, "Long (5-30min)")
-                    .otherwise("Very Long (30min+)"))
-    
-    content_query = content_analysis.writeStream \
-        .outputMode("update") \
-        .trigger(processingTime='25 seconds') \
-        .foreachBatch(lambda df, epoch_id: 
-            print(f"\n CONTENT TYPE ANALYSIS - Epoch {epoch_id}") or
-            df.orderBy(F.desc("avg_views")) \
-              .select("window.start", "content_type", "videos_count", "avg_views", 
-                     "duration_category", "max_views") \
-              .show(10, truncate=False) or
-            print("="*100)
-        ) \
-        .start()
-    
-    return content_query
+            "channel_title", "video_id", "title"
+        ).agg(
+            F.sum(F.col("view_count_parsed").cast("long")).alias("total_views"),
+            F.count("*").alias("num_records")
+        ).withColumn(
+            "realtime_engagement", F.col("total_views")
+        )
 
+    # 3. Join sa batch istorijom (po kanalu, jer batch nema video_id)
+    enriched = realtime_windowed.alias("s") \
+        .join(batch_engagement.alias("b"), on="channel_title", how="left")
 
-#upit 3 - trending
-def create_trending_momentum_detector(trending_prepared):
-    momentum_analysis = trending_prepared \
-        .withWatermark("trending_timestamp", "30 seconds") \
-        .withColumn("views_per_second", 
-                   F.col("view_count_parsed") / F.greatest(F.col("duration_seconds"), F.lit(1))) \
-        .withColumn("popularity_score",
-                   F.log10(F.greatest(F.col("view_count_parsed"), F.lit(1))) * 
-                   F.sqrt(F.greatest(F.col("views_per_second"), F.lit(0.1)))) \
-        .filter(F.col("popularity_score") > 5)  # Filter for significant momentum
-    
-    momentum_query = momentum_analysis.writeStream \
+    # 4. Izračunaj breakout score
+    enriched = enriched.withColumn(
+        "breakout_multiplier",
+        F.when(
+            (F.col("avg_engagement_per_video").isNotNull()) &
+            (F.col("avg_engagement_per_video") > 0),
+            F.col("realtime_engagement") / F.col("avg_engagement_per_video")
+        ).otherwise(None)
+    ).withColumn(
+        "is_breakout",
+        F.when(F.col("breakout_multiplier") >= 2, F.lit("🔥 BREAKOUT"))
+        .when(F.col("breakout_multiplier") >= 1.2, F.lit("⚡ Rising"))
+        .otherwise(F.lit("normal"))
+    )
+
+    # 5. Rangiranje samo po realtime_engagement (bez kategorije)
+    rank_window = Window.partitionBy("window").orderBy(F.col("realtime_engagement").desc())
+    enriched = enriched.withColumn("realtime_rank", F.rank().over(rank_window))
+
+    # 6. Izdvoji najzanimljivije kolone
+    result = enriched.select(
+        "window.start",
+        "channel_title",
+        "title",
+        "realtime_engagement",
+        "avg_engagement_per_video",
+        "breakout_multiplier",
+        "is_breakout",
+        "rank_in_category",     # batch rank
+        "realtime_rank"         # streaming rank
+    )
+
+    # 7. Output
+    query = result.writeStream \
         .outputMode("append") \
-        .trigger(processingTime='15 seconds') \
-        .foreachBatch(lambda df, epoch_id: 
-            print(f"\n TRENDING MOMENTUM - Epoch {epoch_id}") or
-            df.orderBy(F.desc("popularity_score")) \
-              .select("title", "channel_title", "view_count_parsed", "duration_seconds",
-                     "views_per_second", "popularity_score") \
-              .show(5, truncate=False) or
-            print("="*100)
-        ) \
+        .format("console") \
+        .option("truncate", False) \
         .start()
-    
-    return momentum_query
+
+    return query
 
 
-#upit 4 - trending
-def create_description_insights(trending_prepared):
-    description_analysis = trending_prepared \
-        .withWatermark("trending_timestamp", "30 seconds") \
-        .withColumn("description_category",
-                   F.when(F.col("description_length") == 0, "No Description")
-                    .when(F.col("description_length") < 100, "Short")
-                    .when(F.col("description_length") < 500, "Medium")
-                    .otherwise("Long")) \
-        .groupBy(
-            F.window(F.col("trending_timestamp"), "3 minutes"),
-            "description_category"
-        ) \
-        .agg(
-            F.count("*").alias("videos_count"),
-            F.avg("view_count_parsed").alias("avg_views"),
-            F.avg("description_length").alias("avg_desc_length")
-        ) \
-        .withColumn("views_per_char",
-                   F.col("avg_views") / F.greatest(F.col("avg_desc_length"), F.lit(1)))
-    
-    desc_query = description_analysis.writeStream \
-        .outputMode("update") \
-        .trigger(processingTime='30 seconds') \
-        .foreachBatch(lambda df, epoch_id: 
-            print(f"\n DESCRIPTION INSIGHTS - Epoch {epoch_id}") or
-            df.orderBy(F.desc("avg_views")) \
-              .select("window.start", "description_category", "videos_count", 
-                     "avg_views", "avg_desc_length", "views_per_char") \
-              .show(10, truncate=False) or
-            print("="*100)
-        ) \
-        .start()
-    
-    return desc_query
-
-def create_simple_windowed_analysis(video_details_basic):
-    print("=== KREIRANJE SIMPLE WINDOWED ANALYSIS ===")
-    
-    trending_windowed = video_details_basic \
-        .withWatermark("details_timestamp", "30 seconds") \
-        .groupBy(
-            F.window(F.col("details_timestamp"), "30 seconds"),  # Manji window
-            "video_id", "title"
-        ) \
-        .agg(
-            F.count("*").alias("updates_count"),
-            F.max("view_count").alias("max_views"),
-            F.min("view_count").alias("min_views")
-        ) \
-        .withColumn("views_diff", F.col("max_views") - F.col("min_views"))
-    
-    simple_query = trending_windowed.writeStream \
-        .outputMode("update") \
-        .trigger(processingTime='15 seconds') \
-        .foreachBatch(lambda df, epoch_id: 
-            print(f"\n=== SIMPLE WINDOW RESULTS - Epoch {epoch_id} ===") or
-            print(f"Window results count: {df.count()}") or
-            df.show(10, truncate=False) or
-            print("="*80)
-        ) \
-        .start()
-    
-    return simple_query
 
 def main():
     spark = create_spark_session()
@@ -1365,46 +930,10 @@ def main():
     print("\n" + "="*60)
     print("POKRETANJE STREAMING QUERIES")
     print("="*60)
-    
-    # Query za trending podatke
-    # trending_query = trending_basic.writeStream \
-    #     .outputMode("append") \
-    #     .foreachBatch(lambda df, epoch: print_stream_data(df, epoch, "TRENDING VIDEOS")) \
-    #     .trigger(processingTime='10 seconds') \
-    #     .start()
-    
-    # video_details_query = video_details_basic.writeStream \
-    #     .outputMode("append") \
-    #     .foreachBatch(lambda df, epoch: print_stream_data(df, epoch, "VIDEO DETAILS")) \
-    #     .trigger(processingTime='10 seconds') \
-    #     .start()
-    
-    # comments_query = comments_basic.writeStream \
-    #     .outputMode("append") \
-    #     .foreachBatch(lambda df, epoch: print_stream_data(df, epoch, "COMMENTS")) \
-    #     .trigger(processingTime='10 seconds') \
-    #     .start()
-
-
-    #upit 1 - video_details
-    # channel_perf_query = create_channel_performance_stream(video_details_basic)
-
-
-    #upit 2 - video_details
-    # category_trends_query = create_category_trends_stream(video_details_basic)
-
-    #upit 3 - video_details
-    # viral_potential_query = create_viral_potential_stream(video_details_basic)
-
-    #upit 4 - video_details
-    geo_analysis_query = create_geo_analysis_stream(video_details_basic)
 
     
     #priprema podataka
     # prepared_data = prepare_trending_data_enhanced(trending_basic)
-
-
-    
 
     #upit 2 - trending
     # content_query = create_content_type_analysis(prepared_data)
@@ -1418,25 +947,25 @@ def main():
 
     #UPIT1
     # print("Loading batch context data...")
-    # regional_performance, top_channels, regional_baselines = load_batch_context_data(spark)
+    regional_performance, top_channels, regional_baselines = load_batch_context_data(spark)
         
     # print("Preparing streaming data...")
-    # trending_prepared = prepare_trending_data_enhanced(trending_basic)
+    trending_prepared = prepare_trending_data_enhanced(trending_basic)
     
-    # print("Starting intelligent trending analysis...")
-    # enhanced_query = create_intelligent_trending_analysis_v2(
-    #         trending_prepared, regional_performance, top_channels, regional_baselines
-    #     )
+    print("Starting intelligent trending analysis...")
+    enhanced_query = create_intelligent_trending_analysis_v2(
+            trending_prepared, regional_performance, top_channels, regional_baselines
+        )
 
 
     #UPIT2
     # channel_perf_query = create_category_summary_stream(video_details_basic, spark)
 
     #UPIT3
-    regional_query = create_regional_performance_stream(video_details_basic, spark)
+    # regional_query = create_realtime_breakout_engagement(trending_prepared, spark)
     
     # Pokreni trend analizu
-    trend_query = create_trend_analysis_stream(video_details_basic, spark)
+    # trend_query = create_geo_analysis_stream(video_details_basic, spark)
     
     print("Windowed processors pokrenuti! Čekam podatke...")
     

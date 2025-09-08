@@ -1008,3 +1008,100 @@ def create_intelligent_trending_analysis(trending_prepared, top_channels):
         .start()
     
     return channels_query
+
+
+
+
+
+
+#upit 3 - trending
+def create_trending_momentum_detector(trending_prepared):
+    momentum_analysis = trending_prepared \
+        .withWatermark("trending_timestamp", "30 seconds") \
+        .withColumn("views_per_second", 
+                   F.col("view_count_parsed") / F.greatest(F.col("duration_seconds"), F.lit(1))) \
+        .withColumn("popularity_score",
+                   F.log10(F.greatest(F.col("view_count_parsed"), F.lit(1))) * 
+                   F.sqrt(F.greatest(F.col("views_per_second"), F.lit(0.1)))) \
+        .filter(F.col("popularity_score") > 5)  # Filter for significant momentum
+    
+    momentum_query = momentum_analysis.writeStream \
+        .outputMode("append") \
+        .trigger(processingTime='15 seconds') \
+        .foreachBatch(lambda df, epoch_id: 
+            print(f"\n TRENDING MOMENTUM - Epoch {epoch_id}") or
+            df.orderBy(F.desc("popularity_score")) \
+              .select("title", "channel_title", "view_count_parsed", "duration_seconds",
+                     "views_per_second", "popularity_score") \
+              .show(5, truncate=False) or
+            print("="*100)
+        ) \
+        .start()
+    
+    return momentum_query
+
+
+#upit 4 - trending
+def create_description_insights(trending_prepared):
+    description_analysis = trending_prepared \
+        .withWatermark("trending_timestamp", "30 seconds") \
+        .withColumn("description_category",
+                   F.when(F.col("description_length") == 0, "No Description")
+                    .when(F.col("description_length") < 100, "Short")
+                    .when(F.col("description_length") < 500, "Medium")
+                    .otherwise("Long")) \
+        .groupBy(
+            F.window(F.col("trending_timestamp"), "3 minutes"),
+            "description_category"
+        ) \
+        .agg(
+            F.count("*").alias("videos_count"),
+            F.avg("view_count_parsed").alias("avg_views"),
+            F.avg("description_length").alias("avg_desc_length")
+        ) \
+        .withColumn("views_per_char",
+                   F.col("avg_views") / F.greatest(F.col("avg_desc_length"), F.lit(1)))
+    
+    desc_query = description_analysis.writeStream \
+        .outputMode("update") \
+        .trigger(processingTime='30 seconds') \
+        .foreachBatch(lambda df, epoch_id: 
+            print(f"\n DESCRIPTION INSIGHTS - Epoch {epoch_id}") or
+            df.orderBy(F.desc("avg_views")) \
+              .select("window.start", "description_category", "videos_count", 
+                     "avg_views", "avg_desc_length", "views_per_char") \
+              .show(10, truncate=False) or
+            print("="*100)
+        ) \
+        .start()
+    
+    return desc_query
+
+def create_simple_windowed_analysis(video_details_basic):
+    print("=== KREIRANJE SIMPLE WINDOWED ANALYSIS ===")
+    
+    trending_windowed = video_details_basic \
+        .withWatermark("details_timestamp", "30 seconds") \
+        .groupBy(
+            F.window(F.col("details_timestamp"), "30 seconds"),  # Manji window
+            "video_id", "title"
+        ) \
+        .agg(
+            F.count("*").alias("updates_count"),
+            F.max("view_count").alias("max_views"),
+            F.min("view_count").alias("min_views")
+        ) \
+        .withColumn("views_diff", F.col("max_views") - F.col("min_views"))
+    
+    simple_query = trending_windowed.writeStream \
+        .outputMode("update") \
+        .trigger(processingTime='15 seconds') \
+        .foreachBatch(lambda df, epoch_id: 
+            print(f"\n=== SIMPLE WINDOW RESULTS - Epoch {epoch_id} ===") or
+            print(f"Window results count: {df.count()}") or
+            df.show(10, truncate=False) or
+            print("="*80)
+        ) \
+        .start()
+    
+    return simple_query
