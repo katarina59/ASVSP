@@ -35,11 +35,10 @@ Creating a system that enables content creators and marketers to understand:
 │                  DATA LAKE (3 ZONES)                              │
 ├─────────────────────┬─────────────────┬───────────────────────────┤
 │    RAW ZONE         │  PROCESSED ZONE │     CURATED ZONE          │
-│  - Original         |  - Avro format  │  - Aggregated views       │
-│    data             │  - Cleaned      │  - Writing queries        │
-│  - Avro format      │    data         │  - Saving resuts into DB  │
-│  - Partitioned      │  - Validated    |                           |
-|                     |  -Golden dataset│                           │
+│  - Original         | - Parquet format│  - Aggregated views       │
+│    data             │ - Cleaned data  │  - Writing queries        │
+│  - Avro format      │ - Validated data|  - Saving resuts into DB  │
+│  - Partitioned      | - Golden dataset|                           │
 └─────────────────────┴─────────────────┴───────────────────────────┘
                               │
                               ▼
