@@ -20,7 +20,7 @@ The system follows a modern big data architecture with containerized microservic
 1. **Data Sources** → Historical Kaggle dataset + Real-time YT-API stream
 2. **Ingestion Layer** → Batch upload to HDFS + Kafka streaming
 3. **Data Lake** → Raw Zone → Transformation Zone → Curated Zone  
-4. **Processing Engines** → Apache Spark (batch) + Kafka Streams (real-time)
+4. **Processing Engines** → Apache Spark (batch) + Spark Structed Streaming (real-time)
 5. **Presentation Layer** → Dashboards + Real-time alerts
 
 ### 🔧 Technology Stack
