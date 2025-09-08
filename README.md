@@ -1,4 +1,4 @@
-# YouTube Content Intelligence Analytics System
+# Batch and Streaming Data Pipeline for YouTube Trending Analysis
 
 ## 📋 Project Overview
 
@@ -83,6 +83,10 @@ The system follows a modern big data architecture with containerized microservic
 - Standardized dimensions and measures
 - Fact and dimension tables
 - Pre-aggregated metrics for common queries
+
+## 🏗️ System architecture
+<img width="755" height="799" alt="image" src="https://github.com/user-attachments/assets/90096dec-a789-4839-b0c4-96f5d70d4085" />
+
 
 ## 📊 Analytical Questions
 
