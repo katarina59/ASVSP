@@ -2,7 +2,7 @@
 
 ## 📋 Project Overview
 
-A comprehensive big data architecture system for analyzing YouTube content trends and performance patterns. This project combines historical batch data analysis with real-time streaming insights to provide content creators and marketers with actionable intelligence about YouTube trends, viral patterns, and content optimization strategies.
+An end-to-end big data architecture for analyzing YouTube content trends and performance. By combining large-scale historical batch processing with real-time streaming insights, the system uncovers viral patterns, audience behavior, and strategies for content optimization.
 
 ### 🎯 Objectives
 
