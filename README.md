@@ -101,7 +101,7 @@ The system follows a modern big data architecture with containerized microservic
 **Location**: `hdfs://namenode:9000/storage/hdfs/raw/`
 
 **Purpose**: Store original, unprocessed data
-**Format**: Original CSV files converted to Parquet
+**Format**: Original CSV files converted to Avro
 **Partitioning**: By region and trending date
 **Content**: Raw data from both Kaggle dataset and streaming API exactly as received
 
@@ -112,6 +112,7 @@ The system follows a modern big data architecture with containerized microservic
 **Operations**: 
 - Data type conversions
 - Missing value handling
+- Converted to Parquet
 - Duplicate removal  
 - Schema validation
 - Data quality checks
