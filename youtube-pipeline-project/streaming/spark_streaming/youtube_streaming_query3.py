@@ -231,6 +231,10 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
                     "channel_tier"
                 )
             top_performers.show(12, truncate=False)
+
+            top_performers.write \
+                        .mode("append") \
+                        .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query3/top_performers/stream_{epoch_id}")
             
             viral_channels = enriched_with_history.filter(F.col("viral_anomaly_score") >= 1.5) \
                 .orderBy(F.desc("viral_anomaly_score")) \
@@ -277,6 +281,10 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
                 F.format_number("category_avg_views", 0).alias("batch_avg"),
                 "category_performance_vs_batch"
             ).orderBy(F.desc("streaming_channels")).show(8, truncate=False)
+
+            category_comparison.write \
+                        .mode("append") \
+                        .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query3/category_comparison/stream_{epoch_id}")
             
             print("="*150)
             

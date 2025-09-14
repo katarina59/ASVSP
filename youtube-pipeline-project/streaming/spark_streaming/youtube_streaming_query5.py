@@ -250,6 +250,10 @@ def create_tag_intelligence_analysis(streaming_data, tag_intelligence, tag_pair_
                         F.round("tag_momentum_score", 2).alias("Momentum"),
                         F.col("channels_using_tag").alias("Channels")
                     ).show(12, truncate=False)
+
+                historical_comparison.write \
+                .mode("append") \
+                .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query5/stream_{epoch_id}")
             else:
                 streaming_tag_performance.orderBy(F.desc("tag_momentum_score")) \
                     .select(
@@ -304,6 +308,10 @@ def create_tag_intelligence_analysis(streaming_data, tag_intelligence, tag_pair_
                             F.format_number("combo_avg_views", 0).alias("Avg_Views"),
                             F.col("combo_usage").alias("Usage")
                         ).show(8, truncate=False)
+                    
+                    tag_combinations_streaming.write \
+                        .mode("append") \
+                        .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query5/top_tag_comb/stream_{epoch_id}")
             
             
         except Exception as e:

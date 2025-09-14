@@ -260,7 +260,10 @@ def create_intelligent_trending_analysis_v2(trending_prepared, top_channels):
                     F.round("engagement_consistency", 2).alias("consistency"),
                     F.round("intelligent_score_v2", 1).alias("intelligent_score")
                 )
-            top_trending.foreach(lambda row: logger.info(row))
+            top_trending.show(10, truncate=False)
+            top_trending.write \
+                    .mode("append") \
+                    .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query1/top_trending/stream_{epoch_id}")
             
             viral_anomalies = df.filter(F.col("viral_anomaly_score") > 0.5) \
                 .orderBy(F.desc("viral_anomaly_score")) \
@@ -271,11 +274,10 @@ def create_intelligent_trending_analysis_v2(trending_prepared, top_channels):
                     "popularity_tier"
                 )
             
-            # if viral_anomalies.count() > 0:
-            #     viral_anomalies.show(10, truncate=False)
-            # else:
-            #     print("   No significant viral anomalies detected.")
-            
+            viral_anomalies.show(10, truncate=False)
+            viral_anomalies.write \
+                    .mode("append") \
+                    .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query1/viral_anomalies/stream_{epoch_id}")
             
         else:
             print(f"Epoch {epoch_id}: Waiting for trending data...")
@@ -292,7 +294,7 @@ def create_intelligent_trending_analysis_v2(trending_prepared, top_channels):
 
 def main():
     spark = create_spark_session()
-    spark.sparkContext.setLogLevel("WARN")
+    spark.sparkContext.setLogLevel("ERROR")
     
     print(f"Kafka brokers: {KAFKA_BROKERS}")
     
