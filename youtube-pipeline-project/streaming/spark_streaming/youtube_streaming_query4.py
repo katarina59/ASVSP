@@ -274,6 +274,10 @@ def create_content_intelligence_analysis(streaming_data, channel_intelligence):
                     F.col("title_strategy_grade").alias("Title_Grade")
                 ).show(15, truncate=False)
             
+            combined_analysis.write \
+                        .mode("append") \
+                        .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query4/stream_{epoch_id}")
+            
         except Exception as e:
             print(f" Error in content_intelligence_processor epoch {epoch_id}: {e}")
     

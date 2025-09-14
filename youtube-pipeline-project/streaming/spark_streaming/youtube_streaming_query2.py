@@ -227,42 +227,61 @@ def enrich_with_historical(category_performance, historical_categories, historic
         )
 
 def start_category_query(enriched_categories):
-    return enriched_categories.writeStream \
-        .outputMode("update") \
-        .trigger(processingTime='25 seconds') \
-        .foreachBatch(lambda df, epoch_id:
-            
-            df.orderBy(F.desc("current_total_views")) \
-                .select(
-                    "window.start",
-                    "category",
-                    "current_videos_count", 
-                    F.coalesce(F.round("historical_total_videos", 0), F.lit(0)).alias("hist_videos"),
-                    "current_unique_channels",
-                    F.coalesce("historical_unique_channels", F.lit(0)).alias("hist_channels"),
-                    F.round("current_total_views", 0).alias("current_views"),
-                    F.round("current_avg_views", 0).alias("current_avg"),
-                    F.coalesce(F.round("historical_avg_views", 0), F.lit(0)).alias("hist_avg"),
-                    F.coalesce("views_performance_vs_historical", F.lit(0)).alias("views_change_%"),
-                    F.round("current_engagement_rate", 1).alias("curr_eng_%"),
-                    F.coalesce(F.round("historical_avg_engagement_per_video", 1), F.lit(0)).alias("hist_eng"),
-                    F.coalesce("engagement_performance_vs_historical", F.lit(0)).alias("eng_change_%"),
-                    "category_trend_indicator",
-                    "market_position"
-                ) \
-                .show(15, truncate=False) or
+    return (
+        enriched_categories.writeStream
+        .outputMode("update")
+        .trigger(processingTime="25 seconds")
+        .foreachBatch(lambda df, epoch_id: (
+            # Priprema prvog view-a
+            lambda top_trending, perf_trending: (
+                # Ispis na konzolu
+                top_trending.show(15, truncate=False),
+                perf_trending.show(8, truncate=False),
 
-            df.filter(F.col("views_performance_vs_historical").isNotNull()) \
-                .select(
-                    "category",
-                    "views_performance_vs_historical",
-                    "engagement_performance_vs_historical", 
-                    "current_total_views",
-                    "category_trend_indicator"
-                ) \
-                .orderBy(F.desc("views_performance_vs_historical")) \
-                .show(8, truncate=False)) \
+                # Čuvanje rezultata na HDFS
+                top_trending.write
+                    .mode("append")
+                    .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query2/category_trending/stream_{epoch_id}"),
+
+                perf_trending.write
+                    .mode("append")
+                    .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query2/performance_vs_historical/stream_{epoch_id}")
+            )
+        )(
+            # top_trending DF
+            df.orderBy(F.desc("current_total_views"))
+              .select(
+                  "window.start",
+                  "category",
+                  "current_videos_count", 
+                  F.coalesce(F.round("historical_total_videos", 0), F.lit(0)).alias("hist_videos"),
+                  "current_unique_channels",
+                  F.coalesce("historical_unique_channels", F.lit(0)).alias("hist_channels"),
+                  F.round("current_total_views", 0).alias("current_views"),
+                  F.round("current_avg_views", 0).alias("current_avg"),
+                  F.coalesce(F.round("historical_avg_views", 0), F.lit(0)).alias("hist_avg"),
+                  F.coalesce("views_performance_vs_historical", F.lit(0)).alias("views_change_%"),
+                  F.round("current_engagement_rate", 1).alias("curr_eng_%"),
+                  F.coalesce(F.round("historical_avg_engagement_per_video", 1), F.lit(0)).alias("hist_eng"),
+                  F.coalesce("engagement_performance_vs_historical", F.lit(0)).alias("eng_change_%"),
+                  "category_trend_indicator",
+                  "market_position"
+              ),
+
+            # perf_trending DF
+            df.filter(F.col("views_performance_vs_historical").isNotNull())
+              .select(
+                  "category",
+                  "views_performance_vs_historical",
+                  "engagement_performance_vs_historical", 
+                  "current_total_views",
+                  "category_trend_indicator"
+              )
+              .orderBy(F.desc("views_performance_vs_historical"))
+        ))
         .start()
+    )
+
 
 def create_category_summary_stream(video_details_basic, spark):
     historical_categories = load_historical_categories(spark)
