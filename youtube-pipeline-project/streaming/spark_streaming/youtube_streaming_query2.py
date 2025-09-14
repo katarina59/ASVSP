@@ -14,7 +14,6 @@ pg_properties = {
 }
 
 
-# Kafka topics iz producer-a
 KAFKA_TOPICS = {
     "video_details": "youtube_video_details"
 }
@@ -88,9 +87,9 @@ def parse_duration_to_seconds(duration_text):
         return 0
     
     parts = duration_text.split(':')
-    if len(parts) == 2:  # MM:SS
+    if len(parts) == 2:  
         return int(parts[0]) * 60 + int(parts[1])
-    elif len(parts) == 3:  # HH:MM:SS
+    elif len(parts) == 3:  
         return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
     return 0
 
@@ -108,11 +107,10 @@ def create_kafka_stream(spark, topic, schema):
         .withColumn("processing_time", F.current_timestamp())
 
 
+# UPIT 2. Koje su performanse YouTube kategorija (trenutni broj videa, pregledi i engagement po kategoriji) u poslednjih 5 minuta, 
+#         kako se one upoređuju sa istorijskim vrednostima, uključujući kategorije koje rastu ili opadaju i lista top dobitnici i gubitnici
+#         (najveće promene u pregledima i engagementu)?
 
-
-# UPIT 2. Koje su performanse YouTube kategorija (broj videa, pregledi i engagement) u realnom vremenu, 
-#         kako se one upoređuju sa istorijskim vrednostima i koji su ukupni trendovi, 
-#         uključujući kategorije koje rastu ili opadaju i top dobitnici i gubitnici?
 
 def load_historical_categories(spark):
     return spark.read.jdbc(
@@ -142,9 +140,9 @@ def load_historical_engagement(spark):
 
 def calculate_current_category_performance(video_details_basic):
     return video_details_basic \
-        .withWatermark("details_timestamp", "30 seconds") \
+        .withWatermark("details_timestamp", "10 seconds") \
         .groupBy(
-            F.window(F.col("details_timestamp"), "2 minutes"),
+            F.window(F.col("details_timestamp"), "5 minutes", "2 minutes"),
             "category"
         ) \
         .agg(
@@ -167,7 +165,6 @@ def calculate_current_category_performance(video_details_basic):
 
 def start_debug_stream(category_performance):
     def debug_categories(df, epoch_id):
-        print(f"\n DEBUG - Current streaming categories in epoch {epoch_id}:")
         df.select("category").distinct().show(truncate=False)
 
     return category_performance.writeStream \
@@ -234,8 +231,6 @@ def start_category_query(enriched_categories):
         .outputMode("update") \
         .trigger(processingTime='25 seconds') \
         .foreachBatch(lambda df, epoch_id:
-            print(f"\n UNIFIED CATEGORY COMPARISON: CURRENT vs HISTORICAL - Epoch {epoch_id}") or
-            print("="*180) or
             
             df.orderBy(F.desc("current_total_views")) \
                 .select(
@@ -256,30 +251,7 @@ def start_category_query(enriched_categories):
                     "market_position"
                 ) \
                 .show(15, truncate=False) or
-            print("="*180) or
-            
-            print("\n CATEGORY PERFORMANCE SUMMARY:") or
-            df.agg(
-                F.sum("current_videos_count").alias("total_current_videos"),
-                F.sum(F.coalesce("historical_total_videos", F.lit(0))).alias("total_historical_videos"), 
-                F.avg("views_performance_vs_historical").alias("avg_views_change"),
-                F.avg("engagement_performance_vs_historical").alias("avg_engagement_change"),
-                F.count("*").alias("categories_analyzed"),
-                F.sum(F.when(F.col("views_performance_vs_historical").isNull(), 1).otherwise(0)).alias("new_categories"),
-                F.sum(F.when(F.col("views_performance_vs_historical") > 0, 1).otherwise(0)).alias("growing_categories"),
-                F.sum(F.when(F.col("views_performance_vs_historical") < 0, 1).otherwise(0)).alias("declining_categories")
-            ).select(
-                "total_current_videos",
-                "total_historical_videos",
-                F.round("avg_views_change", 2).alias("avg_views_change_%"),
-                F.round("avg_engagement_change", 2).alias("avg_eng_change_%"),
-                "categories_analyzed", 
-                "new_categories",
-                "growing_categories",
-                "declining_categories"
-            ).show(truncate=False) or
-            
-            print("\n TOP CATEGORY MOVERS (Best/Worst Performance):") or
+
             df.filter(F.col("views_performance_vs_historical").isNotNull()) \
                 .select(
                     "category",
@@ -289,9 +261,7 @@ def start_category_query(enriched_categories):
                     "category_trend_indicator"
                 ) \
                 .orderBy(F.desc("views_performance_vs_historical")) \
-                .show(8, truncate=False) or
-            print("="*180)
-        ) \
+                .show(8, truncate=False)) \
         .start()
 
 def create_category_summary_stream(video_details_basic, spark):
@@ -299,7 +269,6 @@ def create_category_summary_stream(video_details_basic, spark):
     historical_engagement_by_cat = load_historical_engagement(spark)
 
     category_performance = calculate_current_category_performance(video_details_basic)
-    debug_stream = start_debug_stream(category_performance)
 
     enriched_categories = enrich_with_historical(category_performance, historical_categories, historical_engagement_by_cat)
 
@@ -310,19 +279,11 @@ def create_category_summary_stream(video_details_basic, spark):
 
 def main():
     spark = create_spark_session()
-    spark.sparkContext.setLogLevel("WARN")
+    spark.sparkContext.setLogLevel("ERROR")
     
-    print("Pokretanje osnovnog YouTube streaming-a...")
     print(f"Kafka brokers: {KAFKA_BROKERS}")
-    
-    print("\n" + "="*60)
-    print("KREIRANJE KAFKA STREAMOVA")
-    print("="*60)
 
-    
     video_details_stream = create_kafka_stream(spark, KAFKA_TOPICS["video_details"], video_details_schema)
-
-
 
     video_details_basic = video_details_stream.select(
     F.col("timestamp").alias("kafka_timestamp"),
@@ -337,7 +298,7 @@ def main():
         
         F.col("video.id").alias("video_id"),
         F.col("video.title").alias("title"),
-        F.col("video.lengthSeconds").cast("int").alias("length_seconds"),  # Cast to int
+        F.col("video.lengthSeconds").cast("int").alias("length_seconds"), 
         
         F.col("video.channelTitle").alias("channel_title"),
         F.col("video.channelId").alias("channel_id"),
