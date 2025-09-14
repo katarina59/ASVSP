@@ -7,7 +7,6 @@ import datetime
 
 KAFKA_BROKERS = os.getenv("KAFKA_BROKERS", "kafka:9092")
 
-# Kafka topics iz producer-a
 KAFKA_TOPICS = {
     "trending": "youtube_trending"
 }
@@ -73,7 +72,6 @@ def create_kafka_stream(spark, topic, schema):
         .withColumn("processing_time", F.current_timestamp())
 
 def load_golden_dataset_analytics(spark):
-    """Učitava golden dataset i pravi analytical views."""
     try:
         golden_df = spark.read.format("parquet").load("hdfs://namenode:9000/storage/hdfs/processed/golden_dataset")
         
@@ -102,13 +100,8 @@ def load_golden_dataset_analytics(spark):
             F.count("*").alias("category_total_videos")
         )
         
-        regional_trends = golden_df.groupBy("region", "trending_month").agg(
-            F.avg("views").alias("regional_monthly_avg_views"),
-            F.count("*").alias("monthly_trending_count"),
-            F.countDistinct("channel_title").alias("unique_channels_monthly")
-        )
         
-        return channel_analytics, category_benchmarks, regional_trends
+        return channel_analytics, category_benchmarks
         
     except Exception as e:
         empty_channel = spark.createDataFrame([], StructType([
@@ -176,11 +169,10 @@ def prepare_streaming_data(trending_stream):
     )
 
 
-# UPIT 3: Koji YouTube kanali trenutno beleže anomalije u performansama u odnosu na svoj istorijski učinak, 
-#         koje kategorije trenutno nadmašuju ili zaostaju u odnosu na istorijske kategorijske proseke, 
-#         i da li postoje kanali koji u realnom vremenu pokazuju viralni rast u poređenju sa svojim istorijskim performansama?
+# UPIT 3: Koji kanali u poslednje 2 minute odstupaju od istorijskih performansi i da li postoji viralni rast, 
+#         te kako se trenutne kategorije porede sa istorijskim prosekom?
 
-def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, category_benchmarks, regional_trends):
+def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, category_benchmarks):
    
     def enrichment_processor(streaming_df, epoch_id):
         try:
@@ -190,7 +182,9 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
                 return
                 
             
-            streaming_aggregated = streaming_df.groupBy("channel_title").agg(
+            streaming_aggregated = streaming_df.groupBy(
+                F.window("stream_timestamp", "2 minutes"),
+                F.col("channel_title")).agg(
                 F.count("*").alias("current_trending_videos"),
                 F.avg("view_count_parsed").alias("current_avg_views"),
                 F.sum("view_count_parsed").alias("current_total_views"),
@@ -199,10 +193,6 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
                 F.avg("description_length").alias("avg_desc_length")
             )
             
-            join_test = streaming_aggregated.join(F.broadcast(channel_analytics), ["channel_title"], "inner")
-            matches = join_test.count()
-            total_streaming = streaming_aggregated.count()
-            print(f"    JOIN SUCCESS: {matches}/{total_streaming} streaming channels matched with batch data")
             
             enriched_with_history = streaming_aggregated.join(
                 F.broadcast(channel_analytics), 
@@ -254,14 +244,10 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
                     F.coalesce("channel_tier", F.lit("New Channel")).alias("tier")
                 )
             
-            viral_count = viral_channels.count()
-            if viral_count > 0:
-                viral_channels.show(10, truncate=False)
-                print(f"   Detected {viral_count} channels with significant growth anomalies!")
-            else:
-                print("   No major viral anomalies detected in this window.")
             
-            streaming_by_category = streaming_df.groupBy("channel_title").agg(
+            streaming_by_category = streaming_df.groupBy(
+                F.window("stream_timestamp", "2 minutes", "1 minutes"),
+                F.col("channel_title")).agg(
                 F.first("current_popularity_tier").alias("tier"),
                 F.avg("view_count_parsed").alias("stream_avg_views")
             ).join(
@@ -284,7 +270,6 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
                  .otherwise("Underperforming")
             )
             
-            print("\n CATEGORY PERFORMANCE (Stream vs Batch Benchmarks):")
             category_comparison.select(
                 "category_title",
                 "streaming_channels",
@@ -312,22 +297,19 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
 
 def main():
     spark = create_spark_session()
-    spark.sparkContext.setLogLevel("WARN")
+    spark.sparkContext.setLogLevel("ERROR")
     
     
-    channel_analytics, category_benchmarks, regional_trends = load_golden_dataset_analytics(spark)
+    channel_analytics, category_benchmarks = load_golden_dataset_analytics(spark)
     
-    print(" Connecting to Kafka streams...")
     trending_stream = create_kafka_stream(spark, KAFKA_TOPICS["trending"], trending_schema)
-    print(" Kafka streams created!")
     
     streaming_prepared = prepare_streaming_data(trending_stream)
     
     enriched_query = create_enriched_stream_batch_analysis(
         streaming_prepared, 
         channel_analytics, 
-        category_benchmarks, 
-        regional_trends
+        category_benchmarks
     )
     
     spark.streams.awaitAnyTermination()

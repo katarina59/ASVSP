@@ -3,6 +3,9 @@ from pyspark.sql import SparkSession # type: ignore
 import pyspark.sql.functions as F # type: ignore
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, LongType, DoubleType # type: ignore
 import datetime 
+import logging
+logger = logging.getLogger("airflow.task.query1")
+logger.setLevel(logging.INFO)
 
 
 KAFKA_BROKERS = os.getenv("KAFKA_BROKERS", "kafka:9092")
@@ -27,6 +30,9 @@ def create_spark_session():
         .config("spark.sql.adaptive.enabled", "true") \
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
+        .config("spark.executor.memory", "4g") \
+        .config("spark.executor.cores", "2") \
+        .config("spark.executor.instances", "2") \
         .getOrCreate()
 
 trending_schema = StructType([
@@ -92,90 +98,46 @@ def create_kafka_stream(spark, topic, schema):
         .option("kafka.bootstrap.servers", KAFKA_BROKERS) \
         .option("subscribe", topic) \
         .option("startingOffsets", "earliest") \
-        .option("failOnDataLoss", "false") \
+        .option("failOnDataLoss", "true") \
+        .option("maxOffsetsPerTrigger", 500) \
         .load() \
         .select(F.from_json(F.col("value").cast("string"), schema).alias("parsed_data")) \
         .select("parsed_data.*") \
         .withColumn("processing_time", F.current_timestamp())
 
 
-# UPIT 1: Koji kanali trenutno dominiraju YouTube trending listom u poslednje 15 minuta, 
+# UPIT 1: Koji kanali trenutno dominiraju YouTube trending listom u poslednjih 15 minuta, 
 #         kada se uporede sa njihovim istorijskim performansama iz batch analize, i koji od njih predstavljaju neočekivane viral 
 #         fenomene koji nisu bili u top performerima?
 
 
 def load_batch_context_data(spark):
+    regional_performance = spark.read.jdbc(
+        pg_url, "query1_category_region_analysis", properties=pg_properties
+    ).groupBy("category_title", "region").agg(
+        F.avg("avg_views").alias("hist_avg_views"),
+        F.avg("avg_comments").alias("hist_avg_comments"),
+        F.avg("moving_avg_views_3d").alias("trend_3d")
+    )
     
-    try:
-        regional_performance = spark.read.jdbc(
-            pg_url, "query1_category_region_analysis", properties=pg_properties
-        ).groupBy("category_title", "region").agg(
-            F.avg("avg_views").alias("hist_avg_views"),
-            F.avg("avg_comments").alias("hist_avg_comments"),
-            F.avg("moving_avg_views_3d").alias("trend_3d")
-        )
-        
-        top_channels = spark.read.jdbc(
-            pg_url, "query2_channel_engagement", properties=pg_properties
-        ).filter(F.col("rank_in_category") <= 5).select(
-            "category_title", "channel_title",
-            "engagement_score", "avg_engagement_per_video", "rank_in_category"
-        )
+    top_channels = spark.read.jdbc(
+        pg_url, "query2_channel_engagement", properties=pg_properties
+    ).filter(F.col("rank_in_category") <= 5).select(
+        "category_title", "channel_title",
+        "engagement_score", "avg_engagement_per_video", "rank_in_category"
+    )
 
-        try:
-            regional_baselines = spark.read.jdbc(
-                pg_url, "bonus1_regional_executive_summary", properties=pg_properties
-            ).select(
-                "region", "avg_views_per_video", "avg_likes_per_video",
-                "total_videos", "unique_channels"
-            )
-        except Exception as e:
-            
-            schema = StructType([
-                StructField("region", StringType(), True),
-                StructField("avg_views_per_video", DoubleType(), True),
-                StructField("avg_likes_per_video", DoubleType(), True),
-                StructField("total_videos", LongType(), True),
-                StructField("unique_channels", LongType(), True)
-            ])
-            regional_baselines = spark.createDataFrame([], schema)
-        
-        return regional_performance, top_channels, regional_baselines
-        
-    except Exception as e:
-        print(f"ERROR loading batch context data: {e}")
+    regional_baselines = spark.read.jdbc(
+        pg_url, "bonus1_regional_executive_summary", properties=pg_properties
+    ).select(
+        "region", "avg_views_per_video", "avg_likes_per_video",
+        "total_videos", "unique_channels"
+    )
+    
+    return regional_performance, top_channels, regional_baselines
 
-        rp_schema = StructType([
-            StructField("category_title", StringType(), True),
-            StructField("region", StringType(), True),
-            StructField("hist_avg_views", DoubleType(), True),
-            StructField("hist_avg_comments", DoubleType(), True),
-            StructField("trend_3d", DoubleType(), True)
-        ])
-        regional_performance = spark.createDataFrame([], rp_schema)
-        
-        tc_schema = StructType([
-            StructField("category_title", StringType(), True),
-            StructField("channel_title", StringType(), True),
-            StructField("engagement_score", DoubleType(), True),
-            StructField("avg_engagement_per_video", DoubleType(), True),
-            StructField("rank_in_category", LongType(), True)
-        ])
-        top_channels = spark.createDataFrame([], tc_schema)
-        
-        rb_schema = StructType([
-            StructField("region", StringType(), True),
-            StructField("avg_views_per_video", DoubleType(), True),
-            StructField("avg_likes_per_video", DoubleType(), True),
-            StructField("total_videos", LongType(), True),
-            StructField("unique_channels", LongType(), True)
-        ])
-        regional_baselines = spark.createDataFrame([], rb_schema)
-        
-        return regional_performance, top_channels, regional_baselines
 
 def prepare_trending_data_enhanced(trending_basic):
-    """Priprema trending podatke sa dodatnim metrikama - BEZ batch join-a"""
     return trending_basic.select(
         F.col("kafka_timestamp"),
         F.col("source"),  
@@ -220,24 +182,12 @@ def prepare_trending_data_enhanced(trending_basic):
 
 
 
-def create_intelligent_trending_analysis_v2(trending_prepared, regional_performance, top_channels, regional_baselines):
-    
-    category_baselines = regional_performance.groupBy("category_title").agg(
-        F.avg("hist_avg_views").alias("category_avg_views"),
-        F.avg("hist_avg_comments").alias("category_avg_comments"),
-        F.avg("trend_3d").alias("category_trend")
-    )
-    
-    regional_thresholds = regional_baselines.select(
-        "region",
-        F.col("avg_views_per_video").alias("regional_baseline_views"),
-        F.col("avg_likes_per_video").alias("regional_baseline_likes")
-    )
+def create_intelligent_trending_analysis_v2(trending_prepared, top_channels):
     
     trending_with_metrics = trending_prepared \
-        .withWatermark("trending_timestamp", "20 minutes") \
+        .withWatermark("trending_timestamp", "15 minutes") \
         .groupBy(
-            F.window(F.col("trending_timestamp"), "15 minutes"),
+            F.window(F.col("trending_timestamp"), "10 minutes"),
             "channel_title", "popularity_tier", "description_category", "content_type"
         ) \
         .agg(
@@ -297,11 +247,7 @@ def create_intelligent_trending_analysis_v2(trending_prepared, regional_performa
     def advanced_processor(df, epoch_id):
         count = df.count()
         if count > 0:
-            current_time = datetime.datetime.now().strftime("%H:%M:%S")
-            print(f"\n ADVANCED TRENDING INTELLIGENCE - Epoch {epoch_id} at {current_time}")
-            print("="*140)
             
-            print(" TOP TRENDING CHANNELS (Multi-dimensional scoring):")
             top_trending = df.filter(F.col("trending_videos_count") >= 1) \
                 .orderBy(F.desc("intelligent_score_v2")) \
                 .select(
@@ -314,9 +260,8 @@ def create_intelligent_trending_analysis_v2(trending_prepared, regional_performa
                     F.round("engagement_consistency", 2).alias("consistency"),
                     F.round("intelligent_score_v2", 1).alias("intelligent_score")
                 )
-            top_trending.show(15, truncate=False)
+            top_trending.foreach(lambda row: logger.info(row))
             
-            print("\n VIRAL ANOMALY DETECTION (Unexpected breakouts):")
             viral_anomalies = df.filter(F.col("viral_anomaly_score") > 0.5) \
                 .orderBy(F.desc("viral_anomaly_score")) \
                 .select(
@@ -326,20 +271,18 @@ def create_intelligent_trending_analysis_v2(trending_prepared, regional_performa
                     "popularity_tier"
                 )
             
-            if viral_anomalies.count() > 0:
-                viral_anomalies.show(10, truncate=False)
-            else:
-                print("   No significant viral anomalies detected.")
+            # if viral_anomalies.count() > 0:
+            #     viral_anomalies.show(10, truncate=False)
+            # else:
+            #     print("   No significant viral anomalies detected.")
             
-            
-            print("="*140)
             
         else:
             print(f"Epoch {epoch_id}: Waiting for trending data...")
     
     query = enriched_trending.writeStream \
         .outputMode("update") \
-        .trigger(processingTime='3 minutes') \
+        .trigger(processingTime='5 minutes') \
         .foreachBatch(advanced_processor) \
         .option("checkpointLocation", "hdfs://namenode:9000/storage/hdfs/checkpoint/query1") \
         .start()
@@ -351,17 +294,9 @@ def main():
     spark = create_spark_session()
     spark.sparkContext.setLogLevel("WARN")
     
-    print("Pokretanje osnovnog YouTube streaming-a...")
     print(f"Kafka brokers: {KAFKA_BROKERS}")
     
-    print("\n" + "="*60)
-    print("KREIRANJE KAFKA STREAMOVA")
-    print("="*60)
-
-    
-    print("Povezujem se na Kafka topice...")
     trending_stream = create_kafka_stream(spark, KAFKA_TOPICS["trending"], trending_schema)
-    print("Kafka streamovi kreirani!")
     
     trending_basic = trending_stream.select(
         F.col("timestamp").alias("kafka_timestamp"),
@@ -394,7 +329,7 @@ def main():
     trending_prepared = prepare_trending_data_enhanced(trending_basic)
     
     enhanced_query = create_intelligent_trending_analysis_v2(
-            trending_prepared, regional_performance, top_channels, regional_baselines
+            trending_prepared, top_channels
         )
     
     
