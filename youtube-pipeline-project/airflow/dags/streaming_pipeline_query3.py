@@ -37,8 +37,4 @@ with DAG(
 )
 
 
-
-    final_task = DummyOperator(task_id="final_task")
-
-
-    query3 >> final_task
+    query3 

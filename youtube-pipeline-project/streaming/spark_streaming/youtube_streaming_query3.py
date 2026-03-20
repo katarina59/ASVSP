@@ -286,7 +286,6 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
                         .mode("append") \
                         .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query3/category_comparison/stream_{epoch_id}")
             
-            print("="*150)
             
         except Exception as e:
             print(f" Error in enrichment_processor epoch {epoch_id}: {e}")

@@ -32,8 +32,8 @@ golden_df.createOrReplaceTempView("youtube_data")
 
 
 # UPIT 1: Koja je prosečna gledanost i prosečan broj komentara po kategoriji, regionu i datumu kada su videi postali trending, 
-#            i kako se ti proseci razlikuju za videe sa uključenim i onemogućenim komentarima? Koje kategorije i regioni dominiraju po gledanosti, 
-#            a kako se trend pregleda menja tokom poslednja tri dana?
+#         i kako se ti proseci razlikuju za videe sa uključenim i onemogućenim komentarima? Koje kategorije i regioni dominiraju po gledanosti, 
+#         a kako se trend pregleda menja tokom poslednja tri dana?
 
 print("\n UPIT 1: Prosečna gledanost po kategoriji, regionu i komentarima...")
 
@@ -119,10 +119,10 @@ query1_result.write.mode("overwrite").jdbc(
 
 
 #  UPIT 2: Koje kategorije i kanali ostvaruju najveći angažman korisnika?  
-#            Koliki je njihov engagement score (ukupan broj lajkova + komentara),
-#            kao i da li taj angažman dolazi iz pozitivnog ili negativnog feedbacka.
-#            Kako se rangiraju unutar svojih kategorija?  
-#            Koji su top 5 kanala po angažmanu u svakoj kategoriji?
+#          Koliki je njihov engagement score (ukupan broj lajkova + komentara),
+#          kao i da li taj angažman dolazi iz pozitivnog ili negativnog feedbacka.
+#          Kako se rangiraju unutar svojih kategorija?  
+#          Koji su top 5 kanala po angažmanu u svakoj kategoriji?
 
 print("\n UPIT 2: Top angažman kanala po kategorijama...")
 
@@ -210,7 +210,6 @@ query2_result.write.mode("overwrite").jdbc(
 
 #  UPIT 3: Koje YouTube kategorije i regioni su top 10% najbržih viralnih videa i istovremeno među top 10% po trajanju na trending listi?
 #            Koliko prosečno treba da video dospe na trending i koliko dugo ostaje, i kako se ove kombinacije rangiraju u odnosu na sve ostale?
-#            Koji sadržaji su i instant hit i dugotrajni hit, tj. “zlatne kombinacije”?
 
 print("\n UPIT 3: Zlatne kombinacije viralnih sadržaja...")
 
@@ -268,17 +267,14 @@ stats = golden_df.filter(
     col("trend_duration_days")
 )
 
-# Kreiranje aggregated DataFrame (ekvivalent drugog CTE-a)
 aggregated = stats.groupBy("category", "region").agg(
     spark_round(avg("days_to_trend"), 2).alias("avg_days_to_trend"),
     spark_round(avg("trend_duration_days"), 2).alias("avg_trend_days")
 )
 
-# Window funkcije za percent_rank
 fastest_window = Window.orderBy(asc("avg_days_to_trend"))
 longest_window = Window.orderBy(desc("avg_trend_days"))
 
-# Kreiranje ranked DataFrame (ekvivalent trećeg CTE-a)
 ranked = aggregated.withColumn(
     "pct_fastest_to_trend", 
     percent_rank().over(fastest_window)
@@ -287,7 +283,6 @@ ranked = aggregated.withColumn(
     percent_rank().over(longest_window)
 )
 
-# Finalni select sa filtriranjem top 10% i bottom 10%
 query3_result = ranked.select(
     "category",
     "region",
@@ -371,7 +366,6 @@ problem_stats = golden_df.filter(col("category_title").isNotNull() & (col("categ
     "views"
 )
 
-print("DEBUG - problem_stats sample:")
 problem_stats.filter(col("problem_type") != "No Issue").show(5)
 
 problem_counts = problem_stats.filter(col("problem_type") != "No Issue").groupBy(
@@ -520,7 +514,7 @@ query5_result.write.mode("overwrite").jdbc(
 #  UPIT 6: Koje tagove, pored osnovne popularnosti, karakteriše najbolja kombinacija viralnog potencijala i tržišne pozicije, 
 #            kakav im je dodeljeni "power level" na osnovu uspešnosti u različitim kategorijama i regionima, 
 #            koju preporuku za buduću upotrebu zaslužuju na osnovu viral score-a i success rate-a, 
-#            i kako se rangiraju globalno kao i unutar svojih power level grupa uz smoothed viral score trend analizu?
+#            i kako se rangiraju globalno kao i unutar svojih power level grupa uz average viral score trend analizu?
 
 print("\n UPIT 6: Napredna tag analiza sa Power Level i preporukama...")
 
@@ -615,7 +609,6 @@ tag_performance = tags_exploded.groupBy("tag").agg(
     ).alias("viral_score")
 ).filter(col("video_count") >= 10)
 
-# CTE 2: tag_with_levels
 tag_with_levels = tag_performance.withColumn(
     "tag_power_level",
     when((col("viral_success_rate") > 50) & (col("video_count") > 50), "MAGIC")
@@ -638,13 +631,11 @@ tag_with_levels = tag_performance.withColumn(
     .otherwise("CONSIDER")
 )
 
-# Window funkcije
 global_rank_window = Window.orderBy(desc("viral_score"))
 power_level_rank_window = Window.partitionBy("tag_power_level").orderBy(desc("viral_score"))
 success_percentile_window = Window.orderBy("viral_success_rate")
 smoothed_window = Window.orderBy(desc("viral_score")).rowsBetween(-2, 2)
 
-# Finalni rezultat
 query6_result = tag_with_levels.filter(col("viral_score") > 100).select(
     "tag",
     "active_regions",
@@ -752,7 +743,6 @@ viral_timeline = golden_df.select(
     avg("views").over(momentum_window)
 )
 
-# Finalni rezultat
 query7_result = viral_timeline.filter(
     (col("days_to_trending") >= 0) & (col("days_to_trending") <= 30)
 ).groupBy("channel_title", "category_title").agg(
@@ -857,7 +847,6 @@ content_analysis = golden_df.select(
     length(col("description"))
 )
 
-# Agregacija prvo
 query8_aggregated = content_analysis.groupBy(
     "category_title", "description_length_category", "thumbnail_quality"
 ).agg(
@@ -866,7 +855,6 @@ query8_aggregated = content_analysis.groupBy(
     spark_round(avg("likes"), 0).alias("avg_likes")
 ).filter(col("video_count") >= 10)
 
-# Window funkcije za UPIT 8 - koriste avg_views kolonu
 performance_rank_window = Window.partitionBy("category_title").orderBy(desc("avg_views"))
 performance_percentile_window = Window.orderBy("avg_views")
 

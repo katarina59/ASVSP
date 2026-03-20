@@ -162,10 +162,8 @@ def create_content_intelligence_analysis(streaming_data, channel_intelligence):
                 print(f"Epoch {epoch_id}: Čekam streaming podatke...")
                 return
             
-            # Proveravamo da li su batch podaci dostupni
             if channel_intelligence is None:
                 
-                # Samo real-time analiza bez poređenja
                 title_performance = streaming_df.groupBy(
                     F.window("stream_timestamp", "2 minutes"),
                     F.col("channel_title")).agg(
@@ -192,7 +190,6 @@ def create_content_intelligence_analysis(streaming_data, channel_intelligence):
                 title_performance.orderBy(F.desc("viral_potential_score")).show(10, truncate=False)
                 return
                 
-            # Real-time analiza naslova
             title_performance = streaming_df.groupBy(
                 F.window("stream_timestamp", "2 minutes"),
                 F.col("channel_title")).agg(
@@ -222,7 +219,6 @@ def create_content_intelligence_analysis(streaming_data, channel_intelligence):
                 (F.log10(F.col("avg_views") + 1) / 10)
             )
             
-            # Priprema batch podataka za poređenje (samo relevantni kanali)
             batch_channels = channel_intelligence.select(
                 F.col("channel_title"),
                 F.col("channel_avg_views").alias("batch_avg_views"),
@@ -231,7 +227,6 @@ def create_content_intelligence_analysis(streaming_data, channel_intelligence):
                 F.col("category_title").alias("batch_category")
             )
             
-            # Kombinovanje real-time i batch podataka
             combined_analysis = title_performance.join(
                 batch_channels, 
                 on="channel_title", 
