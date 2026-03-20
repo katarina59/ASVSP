@@ -1,8 +1,7 @@
 import os
 from pyspark.sql import SparkSession # type: ignore
 import pyspark.sql.functions as F # type: ignore
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, LongType, DoubleType # type: ignore
-import datetime 
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, LongType # type: ignore
 import logging
 logger = logging.getLogger("airflow.task.query1")
 logger.setLevel(logging.INFO)

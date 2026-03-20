@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.operators.bash import BashOperator # type: ignore
-from airflow.operators.dummy import DummyOperator # type: ignore
 from datetime import timedelta
 import pendulum # type: ignore
 
@@ -37,8 +36,4 @@ with DAG(
 )
 
 
-
-    final_task = DummyOperator(task_id="final_task")
-
-
-    query3 >> final_task
+    query3 

@@ -1,8 +1,7 @@
 import os
-from pyspark.sql import SparkSession, Window # type: ignore
+from pyspark.sql import SparkSession # type: ignore
 import pyspark.sql.functions as F # type: ignore
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, LongType, DoubleType # type: ignore
-import datetime 
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, LongType # type: ignore
 
 
 KAFKA_BROKERS = os.getenv("KAFKA_BROKERS", "kafka:9092")

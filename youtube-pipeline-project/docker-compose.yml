@@ -26,43 +26,6 @@ x-airflow-common:
       - kafka-network
 
 services:
-  # airflow:
-  #   image: apache/airflow:2.9.3-python3.11
-  #   container_name: airflow
-  #   restart: always
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   environment:
-  #     - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
-  #     - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-  #     - AIRFLOW__CORE__LOAD_EXAMPLES=False
-  #     - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
-  #     - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
-  #     - AIRFLOW_UID=${AIRFLOW_UID}
-  #     - AIRFLOW__CORE__DEFAULT_TIMEZONE=UTC
-  #     - AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE=UTC
-  #     - TZ=UTC
-  #   volumes:
-  #     - ./airflow/dags:/opt/airflow/dags
-  #     - ./airflow/logs:/opt/airflow/logs
-  #     - ./airflow/plugins:/opt/airflow/plugins
-  #     - ./batch:/opt/airflow/jobs
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   ports:
-  #     - "${AIRFLOW_PORT}:8080"
-  #   command: >
-  #     bash -c "
-  #     echo 'Postgres is healthy, initializing Airflow database...' &&
-  #     airflow db init &&
-  #     echo 'Database initialized successfully!' &&
-  #     airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin || echo 'User already exists' &&
-  #     echo 'Starting Airflow services...' &&
-  #     airflow webserver --port 8080 &
-  #     airflow scheduler
-  #     "
-  #   networks:
-  #     - kafka-network
 
   airflow-webserver:
     <<: *airflow-common
@@ -136,19 +99,6 @@ services:
     networks:
       - kafka-network
 
-  # consumer:
-  #   build: ./streaming/kafka_consumer
-  #   container_name: consumer
-  #   environment:
-  #     - KAFKA_BROKERS=kafka:9092
-  #     - KAFKA_TOPIC=youtube_realtime
-  #   depends_on:
-  #     kafka:
-  #       condition: service_healthy
-  #   restart: unless-stopped
-  #   networks:
-  #     - kafka-network
-
   spark-master:
     image: bitnami/spark:3.5.1
     container_name: spark-master
@@ -173,28 +123,6 @@ services:
       - ./jars:/opt/spark/jars/postgresql-42.7.6.jar
     networks:
       - kafka-network
-
-  # spark-worker:
-  #   image: bitnami/spark:3.5.1
-  #   environment:
-  #     - SPARK_MODE=worker
-  #     - SPARK_MASTER_URL=spark://spark-master:7077
-  #     #dodato za real-time
-  #     - SPARK_WORKER_MEMORY=2g
-  #     - SPARK_EXECUTOR_MEMORY=1g
-  #     - SPARK_RPC_AUTHENTICATION_ENABLED=no
-  #     - SPARK_RPC_ENCRYPTION_ENABLED=no
-  #     - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-  #     - SPARK_SSL_ENABLED=no
-  #   depends_on:
-  #     - spark-master 
-  #   deploy:
-  #     replicas: 3
-  #   volumes:
-  #     - ./streaming/spark_streaming:/opt/spark_apps
-  #     - ./jars:/opt/spark/jars/postgresql-42.7.6.jar
-  #   networks:
-  #     - kafka-network
 
   spark-worker-1:
     image: bitnami/spark:3.5.1
@@ -247,7 +175,6 @@ services:
       - 9000:9000
     volumes:
       - hdfs_namenode:/hadoop/dfs/name
-      #- ./data:/data
     ulimits:
       nofile:
         soft: 65536

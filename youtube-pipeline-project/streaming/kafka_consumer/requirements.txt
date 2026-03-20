@@ -1,4 +1,0 @@
-kafka-python
-requests
-pandas
-numpy
