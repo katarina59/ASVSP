@@ -27,7 +27,7 @@ with DAG(
     task_id="query5",
     bash_command=(
         "docker exec spark-master "
-        "spark-submit "
+        "/spark/bin/spark-submit "
         "--master spark://spark-master:7077 "
         "--deploy-mode client "
         "--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.postgresql:postgresql:42.7.6 "

@@ -39,10 +39,10 @@ with DAG(
     task_id="ingest_raw",
     bash_command=(
         "docker exec spark-master "
-        "spark-submit "
+        "/spark/bin/spark-submit "
         "--master spark://spark-master:7077 "
         "--deploy-mode client "
-        "--packages org.apache.spark:spark-avro_2.12:3.5.1 "
+        "--packages org.apache.spark:spark-avro_2.12:3.3.0 "
         "/opt/airflow/jobs/ingestion/ingest_raw_to_hdfs.py"
     ),
 )
@@ -62,14 +62,19 @@ with DAG(
 
     
     transform_golden = BashOperator(
-        task_id="transform_golden",
-        bash_command=(
-            "docker exec spark-master "
-            "spark-submit "
-            "--master spark://spark-master:7077 "
-            "--deploy-mode client "
-            "--packages org.apache.spark:spark-avro_2.12:3.5.1 "
-            "/opt/airflow/jobs/transformation/transform_to_golden_dataset.py"
+    task_id="transform_golden",
+    bash_command=(
+        "docker exec spark-master "
+        "/spark/bin/spark-submit "
+        "--master spark://spark-master:7077 "
+        "--deploy-mode client "
+        "--executor-memory 2G "
+        "--driver-memory 2G "
+        "--conf spark.executor.memoryOverhead=512m "
+        "--conf spark.sql.shuffle.partitions=2 "
+        "--conf spark.executor.cores=1 "
+        "--packages org.apache.spark:spark-avro_2.12:3.3.0 "
+        "/opt/airflow/jobs/transformation/transform_to_golden_dataset.py"
         ),
     )
 
@@ -89,19 +94,21 @@ with DAG(
 
 
     spark_batch_analystics = BashOperator(
-        task_id="spark_batch_analystics",
-        bash_command=(
-            "docker exec spark-master "
-            "spark-submit "
-            "--master spark://spark-master:7077 "
-            "--deploy-mode client "
-            "--executor-memory 2G "
-            "--driver-memory 2G "
-            "--conf spark.executor.cores=2 "
-            "--packages org.postgresql:postgresql:42.7.6 "
-            "/opt/airflow/jobs/transformation/spark_batch_analystics_datalake.py"
-        ),
-    )
+    task_id="spark_batch_analystics",
+    bash_command=(
+        "docker exec spark-master "
+        "/spark/bin/spark-submit "
+        "--master spark://spark-master:7077 "
+        "--deploy-mode client "
+        "--executor-memory 2G "
+        "--driver-memory 2G "
+        "--conf spark.executor.memoryOverhead=512m "
+        "--conf spark.sql.shuffle.partitions=4 "
+        "--conf spark.executor.cores=1 "
+        "--packages org.postgresql:postgresql:42.7.6 "
+        "/opt/airflow/jobs/transformation/spark_batch_analystics_datalake.py"
+    ),
+)
 
 
     final_task = DummyOperator(task_id="final_task")

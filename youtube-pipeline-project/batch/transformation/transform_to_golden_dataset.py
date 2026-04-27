@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession # type: ignore
-from pyspark.sql.functions import col, lit, to_date, when, month, year, array, concat_ws,concat, size, expr,regexp_replace, trim, length, split as spark_split # type: ignore
+from pyspark.sql.functions import col, lit, to_date, when, month, year, array, concat_ws, concat, size, expr, regexp_replace, trim, length, split as spark_split # type: ignore
 
 spark = SparkSession.builder \
     .appName("Processed Zone - Golden Dataset") \
@@ -12,12 +12,19 @@ region_map = {
 
 regions = list(region_map.keys())
 
-all_dataframes = []
+# ❌ OBRISANO: all_dataframes = []
 
-for region in regions:
-    videos_df = spark.read.format("avro").load(f"hdfs://namenode:9000/storage/hdfs/raw/avro/{region}videos")
+for i, region in enumerate(regions):
 
-    categories_df = spark.read.format("avro").load(f"hdfs://namenode:9000/storage/hdfs/raw/avro/{region}_category_id")
+    print(f"Processing region: {region}")
+
+    videos_df = spark.read.format("avro").load(
+        f"hdfs://namenode:9000/storage/hdfs/raw/avro/{region}videos"
+    )
+
+    categories_df = spark.read.format("avro").load(
+        f"hdfs://namenode:9000/storage/hdfs/raw/avro/{region}_category_id"
+    )
 
     joined_df = videos_df.alias("v").join(
         categories_df.alias("c"),
@@ -112,16 +119,19 @@ for region in regions:
         .otherwise(col("tags_list"))
     )
 
-    all_dataframes.append(processed_df)
+    # ✅ DODATO: smanji memory pressure
+    processed_df = processed_df.repartition(2)
 
-final_df = all_dataframes[0]
-for df in all_dataframes[1:]:
-    final_df = final_df.unionByName(df)
+    # ✅ KLJUČNO: write po regionu
+    write_mode = "overwrite" if i == 0 else "append"
 
-final_df.write.format("parquet").mode("overwrite").save("hdfs://namenode:9000/storage/hdfs/processed/golden_dataset")
+    processed_df.write \
+        .mode(write_mode) \
+        .format("parquet") \
+        .save("hdfs://namenode:9000/storage/hdfs/processed/golden_dataset")
 
-print(final_df.columns)
-final_df.printSchema()
+# ❌ OBRISANO: union + final_df
+
+print("Processing completed successfully!")
 
 spark.stop()
-
