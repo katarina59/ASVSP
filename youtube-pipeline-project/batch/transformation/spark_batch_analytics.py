@@ -1,34 +1,21 @@
-# spark_batch_analytics.py - Batch obrada direktno nad HDFS podacima
-# from pyparsing import col, regexp_replace, split, length, trim, lower, explode
 from pyspark.sql import SparkSession # type: ignore
-from pyspark.sql.functions import col, regexp_replace, split, length, trim, lower, explode # type: ignore
+from pyspark.sql.functions import col, length, trim, lower, explode # type: ignore
 from pyspark.sql.types import * # type: ignore
 
-# =====================================================
-# 🔥 KREIRANJE SPARK SESIJE
-# =====================================================
 spark = SparkSession.builder \
     .appName("YouTube Analytics - Batch Processing over Data Lake") \
     .config("spark.sql.adaptive.enabled", "true") \
     .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
     .getOrCreate()
 
-# =====================================================
-# 📊 UČITAVANJE PODATAKA DIREKTNO IZ HDFS JEZERA
-# =====================================================
-print("🔄 Učitavanje podataka iz Data Lake (HDFS)...")
+print("Učitavanje podataka iz Data Lake (HDFS)...")
 
-# Učitaj golden dataset iz parquet formata (ovo je OK jer je u HDFS)
 golden_df = spark.read.parquet("hdfs://namenode:9000/storage/hdfs/processed/golden_dataset")
 
-print(f"✅ Učitano {golden_df.count()} rekorda iz Data Lake")
+print(f"Učitano {golden_df.count()} rekorda iz Data Lake")
 
-# =====================================================
-# 🏗️ KREIRANJE STAR SCHEMA VIEWS U SPARK-u
-# =====================================================
-print("🏗️ Kreiranje Star Schema u Spark sesiji...")
+print("Kreiranje Star Schema u Spark sesiji...")
 
-# Kreiraj dimenzije kao Spark DataFrame views
 dim_category = golden_df.select(
     "category_id", "category_title", "assignable"
 ).dropDuplicates(["category_id"])
@@ -56,7 +43,6 @@ fact_trending_videos = golden_df.select(
     "region_id", "views", "likes", "dislikes", "comment_count"
 )
 
-# Registruj kao temp views za SQL upite
 dim_category.createOrReplaceTempView("dim_category")
 dim_video.createOrReplaceTempView("dim_video") 
 dim_region.createOrReplaceTempView("dim_region")
@@ -64,16 +50,13 @@ dim_publish_date.createOrReplaceTempView("dim_publish_date")
 dim_trending_date.createOrReplaceTempView("dim_trending_date")
 fact_trending_videos.createOrReplaceTempView("fact_trending_videos")
 
-print("✅ Star Schema views kreirani u Spark sesiji")
+print("Star Schema views kreirani u Spark sesiji")
+
 
 # =====================================================
-# 📈 BATCH ANALITIKA - SVI UPITI NAD HDFS PODACIMA
+# UPIT 1: Prosečna gledanost i komentari po kategoriji, regionu i datumu
 # =====================================================
-
-# =====================================================
-# 🔍 UPIT 1: Prosečna gledanost i komentari po kategoriji, regionu i datumu
-# =====================================================
-print("\n🔍 UPIT 1: Prosečna gledanost po kategoriji, regionu i komentarima...")
+print("\n UPIT 1: Prosečna gledanost po kategoriji, regionu i komentarima...")
 
 query1_result = spark.sql("""
 SELECT 
@@ -105,16 +88,16 @@ GROUP BY dc.category_title, dr.region, dt.trending_full_date, dv.comments_disabl
 ORDER BY dc.category_title, dr.region, dt.trending_full_date, dv.comments_disabled
 """)
 
-print("📊 TOP 15 rezultata UPIT 1:")
+print("TOP 15 rezultata UPIT 1:")
 query1_result.show(15, truncate=False)
 query1_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query1_category_region_analysis"
 )
 
 # =====================================================
-# 🔍 UPIT 2: Engagement analiza kanala po kategorijama - Top 5
+# UPIT 2: Engagement analiza kanala po kategorijama - Top 5
 # =====================================================
-print("\n🔍 UPIT 2: Top angažman kanala po kategorijama...")
+print("\n UPIT 2: Top angažman kanala po kategorijama...")
 
 query2_result = spark.sql("""
 WITH engagement_stats AS (
@@ -156,16 +139,16 @@ WHERE rank_in_category <= 5  -- Top 5 kanala po svakoj kategoriji
 ORDER BY category_title, rank_in_category
 """)
 
-print("📊 TOP 25 rezultata UPIT 2:")
+print("TOP 25 rezultata UPIT 2:")
 query2_result.show(25, truncate=False)
 query2_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query2_channel_engagement"
 )
 
 # =====================================================
-# 🔍 UPIT 3: Zlatne kombinacije - najbrži i najduži viralni sadržaji
+# UPIT 3: Zlatne kombinacije - najbrži i najduži viralni sadržaji
 # =====================================================
-print("\n🔍 UPIT 3: Zlatne kombinacije viralnih sadržaja...")
+print("\n UPIT 3: Zlatne kombinacije viralnih sadržaja...")
 
 query3_result = spark.sql("""
 WITH stats AS (
@@ -216,16 +199,16 @@ WHERE pct_fastest_to_trend <= 0.10 AND pct_longest_trending >= 0.90
 ORDER BY pct_fastest_to_trend, pct_longest_trending;
 """)
 
-print("📊 Rezultati UPIT 3 - Zlatne kombinacije:")
+print("Rezultati UPIT 3 - Zlatne kombinacije:")
 query3_result.show(20, truncate=False)
 query3_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query3_viral_golden_combinations"
 )
 
 # =====================================================
-# 🔍 UPIT 4: Najčešći problemi po kategoriji i regionu
+# UPIT 4: Najčešći problemi po kategoriji i regionu
 # =====================================================
-print("\n🔍 UPIT 4: Najčešći tip problema po kombinaciji kategorije i regiona...")
+print("\n UPIT 4: Najčešći tip problema po kombinaciji kategorije i regiona...")
 
 query4_result = spark.sql("""
 WITH problem_stats AS (
@@ -277,16 +260,16 @@ WHERE problem_rank = 1
 ORDER BY category_title, region
 """)
 
-print("📊 Rezultati UPIT 4 - Najčešći problemi:")
+print("Rezultati UPIT 4 - Najčešći problemi:")
 query4_result.show(30, truncate=False)
 query4_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query4_problem_analysis"
 )
 
 # =====================================================
-# 🔍 UPIT 5: Najpopularniji i najuspešniji tagovi - viral score
+# UPIT 5: Najpopularniji i najuspešniji tagovi - viral score
 # =====================================================
-print("\n🔍 UPIT 5: Tag analiza - viral score ranking...")
+print("\n UPIT 5: Tag analiza - viral score ranking...")
 
 # Kreiraj eksplodiranu verziju tagova
 tags_exploded = golden_df.select(
@@ -338,16 +321,16 @@ ORDER BY viral_score DESC
 LIMIT 30
 """)
 
-print("📊 TOP 30 tagova UPIT 5:")
+print("TOP 30 tagova UPIT 5:")
 query5_result.show(30, truncate=False)
 query5_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query5_tag_viral_analysis"
 )
 
 # =====================================================
-# 🔍 UPIT 6: Napredna tag analiza sa sezonskim trendovima i preporukama
+# UPIT 6: Napredna tag analiza sa sezonskim trendovima i preporukama
 # =====================================================
-print("\n🔍 UPIT 6: Napredna tag analiza sa Power Level i preporukama...")
+print("\n UPIT 6: Napredna tag analiza sa Power Level i preporukama...")
 
 query6_result = spark.sql("""
 WITH tag_performance AS (
@@ -407,16 +390,16 @@ ORDER BY viral_score DESC
 LIMIT 30
 """)
 
-print("📊 TOP 30 naprednih tag analiza UPIT 6:")
+print("TOP 30 naprednih tag analiza UPIT 6:")
 query6_result.show(30, truncate=False)
 query6_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query6_advanced_tag_recommendations"
 )
 
 # =====================================================
-# 🔍 UPIT 7: Najbrži viralni kanali po kategorijama
+# UPIT 7: Najbrži viralni kanali po kategorijama
 # =====================================================
-print("\n🔍 UPIT 7: YouTube kanali sa najbržom viralizacijom...")
+print("\n UPIT 7: YouTube kanali sa najbržom viralizacijom...")
 
 query7_result = spark.sql("""
 WITH viral_timeline AS (
@@ -463,16 +446,16 @@ ORDER BY fast_viral_percentage DESC, avg_momentum DESC
 LIMIT 20
 """)
 
-print("📊 TOP 20 najbrži viralni kanali UPIT 7:")
+print("TOP 20 najbrži viralni kanali UPIT 7:")
 query7_result.show(20, truncate=False)
 query7_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query7_fastest_viral_channels"
 )
 
 # =====================================================
-# 🔍 UPIT 8: Analiza dužine opisa i kvaliteta thumbnail-a
+# UPIT 8: Analiza dužine opisa i kvaliteta thumbnail-a
 # =====================================================
-print("\n🔍 UPIT 8: Optimalna kombinacija opisa i thumbnail kvaliteta...")
+print("\n UPIT 8: Optimalna kombinacija opisa i thumbnail kvaliteta...")
 
 query8_result = spark.sql("""
 SET max_parallel_workers_per_gather = 0
@@ -523,16 +506,16 @@ HAVING COUNT(*) >= 10
 ORDER BY category_title, performance_rank
 """)
 
-print("📊 Najbolje kombinacije opisa/thumbnail UPIT 8:")
+print("Najbolje kombinacije opisa/thumbnail UPIT 8:")
 query8_result.show(40, truncate=False)
 query8_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query8_content_optimization"
 )
 
 # =====================================================
-# 🔍 UPIT 9: Sezonska analiza - optimalno vreme za lansiranje
+# UPIT 9: Sezonska analiza - optimalno vreme za lansiranje
 # =====================================================
-print("\n🔍 UPIT 9: Optimalno vreme lansiranje po kategoriji i regionu...")
+print("\n UPIT 9: Optimalno vreme lansiranje po kategoriji i regionu...")
 
 query9_result = spark.sql("""
 WITH seasonal_patterns AS (
@@ -598,16 +581,16 @@ HAVING COUNT(*) >= 1 AND SUM(videos_count) >= 15
 ORDER BY category_title, region, data_confidence DESC, month_rank
 """)
 
-print("📊 Optimalno vreme lansiranja UPIT 9:")
+print("Optimalno vreme lansiranja UPIT 9:")
 query9_result.show(50, truncate=False)
 query9_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query9_optimal_launch_timing"
 )
 
 # =====================================================
-# 🔍 UPIT 10: Najgledaniji video po kanalu preko 100M pregleda
+# UPIT 10: Najgledaniji video po kanalu preko 100M pregleda
 # =====================================================
-print("\n🔍 UPIT 10: Najgledaniji video po kanalu sa regionom...")
+print("\n UPIT 10: Najgledaniji video po kanalu sa regionom...")
 
 query10_result = spark.sql("""
 WITH channel_top_videos AS (
@@ -641,18 +624,18 @@ WHERE rn = 1 AND views >= 100000000
 ORDER BY views DESC
 """)
 
-print("📊 TOP kanali sa najvećim hitovima UPIT 10:")
+print("TOP kanali sa najvećim hitovima UPIT 10:")
 query10_result.show(30, truncate=False)
 query10_result.coalesce(1).write.mode("overwrite").parquet(
     "hdfs://namenode:9000/storage/hdfs/analytics/query10_top_channels_mega_hits"
 )
 
 # =====================================================
-# 💾 DODATNI UPITI - EXECUTIVE SUMMARY I INSIGHTS
+# DODATNI UPITI - EXECUTIVE SUMMARY I INSIGHTS
 # =====================================================
 
 # BONUS UPIT 1: Ukupna statistika po regionima
-print("\n📈 BONUS UPIT 1: Executive Summary po regionima...")
+print("\n BONUS UPIT 1: Executive Summary po regionima...")
 
 bonus1_result = spark.sql("""
 SELECT 
@@ -681,7 +664,7 @@ bonus1_result.coalesce(1).write.mode("overwrite").parquet(
 )
 
 # BONUS UPIT 2: Kategorial Performance Matrix
-print("\n📈 BONUS UPIT 2: Performance Matrix po kategorijama...")
+print("\n BONUS UPIT 2: Performance Matrix po kategorijama...")
 
 bonus2_result = spark.sql("""
 WITH category_metrics AS (
@@ -737,7 +720,7 @@ bonus2_result.coalesce(1).write.mode("overwrite").parquet(
 )
 
 # BONUS UPIT 3: Vremenski trendovi i dinamika
-print("\n📈 BONUS UPIT 3: Vremenski trendovi i growth analiza...")
+print("\n BONUS UPIT 3: Vremenski trendovi i growth analiza...")
 
 bonus3_result = spark.sql("""
 WITH monthly_trends AS (
@@ -797,9 +780,9 @@ bonus3_result.coalesce(1).write.mode("overwrite").parquet(
 )
 
 # =====================================================
-# 💾 AGREGACIJA I FINALNI IZVЕШТAJ
+# AGREGACIJA I FINALNI IZVЕШТAJ
 # =====================================================
-print("\n📋 KREIRANJE FINALNOG IZVJEŠTAJA...")
+print("\n KREIRANJE FINALNOG IZVJEŠTAJA...")
 
 # Kreiraj sažetak svih analiza
 summary_report = spark.sql("""
@@ -828,7 +811,7 @@ SELECT
 FROM dim_trending_date
 """)
 
-print("📊 FINALNI IZVJEŠTAJ:")
+print("FINALNI IZVJEŠTAJ:")
 summary_report.show(truncate=False)
 
 # Sačuvaj finalni izvještaj
@@ -836,8 +819,8 @@ summary_report.coalesce(1).write.mode("overwrite").json(
     "hdfs://namenode:9000/storage/hdfs/analytics/final_batch_report"
 )
 
-print("\n✅ BATCH OBRADA ZAVRŠENA!")
-print("📁 Svi rezultati sačuvani u: hdfs://namenode:9000/storage/hdfs/analytics/")
-print("🎯 Korišćena je star schema struktura direktno nad HDFS podacima")
+print("\n BATCH OBRADA ZAVRŠENA!")
+print("Svi rezultati sačuvani u: hdfs://namenode:9000/storage/hdfs/analytics/")
+print("Korišćena je star schema struktura direktno nad HDFS podacima")
 
 spark.stop()

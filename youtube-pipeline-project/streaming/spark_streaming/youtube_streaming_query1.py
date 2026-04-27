@@ -1,8 +1,7 @@
 import os
 from pyspark.sql import SparkSession # type: ignore
 import pyspark.sql.functions as F # type: ignore
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, LongType, DoubleType # type: ignore
-import datetime 
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, LongType # type: ignore
 import logging
 logger = logging.getLogger("airflow.task.query1")
 logger.setLevel(logging.INFO)
@@ -126,15 +125,8 @@ def load_batch_context_data(spark):
         "category_title", "channel_title",
         "engagement_score", "avg_engagement_per_video", "rank_in_category"
     )
-
-    regional_baselines = spark.read.jdbc(
-        pg_url, "bonus1_regional_executive_summary", properties=pg_properties
-    ).select(
-        "region", "avg_views_per_video", "avg_likes_per_video",
-        "total_videos", "unique_channels"
-    )
     
-    return regional_performance, top_channels, regional_baselines
+    return regional_performance, top_channels
 
 
 def prepare_trending_data_enhanced(trending_basic):
@@ -326,7 +318,7 @@ def main():
 
 
 
-    regional_performance, top_channels, regional_baselines = load_batch_context_data(spark)
+    regional_performance, top_channels = load_batch_context_data(spark)
         
     trending_prepared = prepare_trending_data_enhanced(trending_basic)
     

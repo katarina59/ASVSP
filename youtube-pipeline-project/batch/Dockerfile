@@ -1,4 +1,4 @@
-FROM bitnami/spark:3.5.1
+FROM public.ecr.aws/bitnami/spark:3.5.1
 
 COPY ./ingestion/ingest_raw_to_hdfs.py /app/ingest_raw_to_hdfs.py
 

@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.operators.bash import BashOperator # type: ignore
-from airflow.operators.dummy import DummyOperator # type: ignore
 from datetime import timedelta
 import pendulum # type: ignore
 
@@ -28,7 +27,7 @@ with DAG(
     task_id="query4",
     bash_command=(
         "docker exec spark-master "
-        "spark-submit "
+        "/spark/bin/spark-submit "
         "--master spark://spark-master:7077 "
         "--deploy-mode client "
         "--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.postgresql:postgresql:42.7.6 "
@@ -36,9 +35,4 @@ with DAG(
     ),
 )
 
-
-
-    final_task = DummyOperator(task_id="final_task")
-
-
-    query4 >> final_task
+    query4 
