@@ -58,7 +58,6 @@ trending_schema = StructType([
 ])
 
 def create_kafka_stream(spark, topic, schema):
-    """Kreira Kafka stream sa error handling-om."""
     return spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", KAFKA_BROKERS) \

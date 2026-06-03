@@ -82,7 +82,6 @@ video_details_schema = StructType([
 
 
 def parse_duration_to_seconds(duration_text):
-    """Konvertuje duration text u sekunde."""
     if not duration_text:
         return 0
     
@@ -94,7 +93,6 @@ def parse_duration_to_seconds(duration_text):
     return 0
 
 def create_kafka_stream(spark, topic, schema):
-    """Kreira Kafka stream sa error handling-om."""
     return spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", KAFKA_BROKERS) \
@@ -232,13 +230,10 @@ def start_category_query(enriched_categories):
         .outputMode("update")
         .trigger(processingTime="25 seconds")
         .foreachBatch(lambda df, epoch_id: (
-            # Priprema prvog view-a
             lambda top_trending, perf_trending: (
-                # Ispis na konzolu
                 top_trending.show(15, truncate=False),
                 perf_trending.show(8, truncate=False),
 
-                # Čuvanje rezultata na HDFS
                 top_trending.write
                     .mode("append")
                     .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query2/category_trending/stream_{epoch_id}"),
@@ -248,7 +243,6 @@ def start_category_query(enriched_categories):
                     .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query2/performance_vs_historical/stream_{epoch_id}")
             )
         )(
-            # top_trending DF
             df.orderBy(F.desc("current_total_views"))
               .select(
                   "window.start",
@@ -268,7 +262,6 @@ def start_category_query(enriched_categories):
                   "market_position"
               ),
 
-            # perf_trending DF
             df.filter(F.col("views_performance_vs_historical").isNotNull())
               .select(
                   "category",

@@ -73,12 +73,10 @@ def load_tag_intelligence_dataset(spark):
     try:
         golden_df = spark.read.format("parquet").load("hdfs://namenode:9000/storage/hdfs/processed/golden_dataset")
         
-        # Eksplodiranje tagova za analizu
         exploded_tags = golden_df.select("*", F.explode("tags_list").alias("tag")) \
             .filter(F.col("tag") != "no-tags") \
             .filter(F.col("tag") != "unknown")
         
-        # Tag Intelligence Analysis - osnovne statistike po tagu
         tag_intelligence = exploded_tags.groupBy("tag", "category_title").agg(
             F.count("*").alias("tag_usage_count"),
             F.avg("views").alias("tag_avg_views"),
@@ -89,9 +87,8 @@ def load_tag_intelligence_dataset(spark):
             F.percentile_approx("views", 0.9).alias("tag_90th_percentile_views"),
             F.countDistinct("channel_title").alias("unique_channels_using_tag"),
             F.countDistinct("trending_full_date").alias("trending_days_with_tag")
-        ).filter(F.col("tag_usage_count") >= 10)  # Samo tagovi koji se koriste dovoljno često
+        ).filter(F.col("tag_usage_count") >= 10)  
         
-        # Kombinacije tagova - analiza parova tagova
         tag_combinations = golden_df.filter(F.size("tags_list") >= 2) \
             .withColumn("tag_pair", 
                 F.expr("transform(sequence(0, size(tags_list) - 2), i -> " +
@@ -131,30 +128,23 @@ def prepare_streaming_tag_features(trending_stream):
         "view_count_parsed", 
         F.regexp_replace(F.col("view_count_raw"), "[^0-9]", "").cast("long")
     ).withColumn(
-        # Ekstraktovanje tagova iz title-a i description-a (simulacija)
         "extracted_tags",
         F.array_distinct(F.flatten(F.array(
-            # Gaming tagovi
             F.when(F.lower(F.col("title")).rlike("(game|gaming|play|player|gamer)"), F.array(F.lit("gaming"))).otherwise(F.array()),
             F.when(F.lower(F.col("title")).rlike("(minecraft|fortnite|valorant|csgo)"), F.array(F.lit("game-specific"))).otherwise(F.array()),
             
-            # Music tagovi
             F.when(F.lower(F.col("title")).rlike("(music|song|audio|sound|beat)"), F.array(F.lit("music"))).otherwise(F.array()),
             F.when(F.lower(F.col("title")).rlike("(cover|remix|live|concert)"), F.array(F.lit("music-performance"))).otherwise(F.array()),
             
-            # Entertainment tagovi
             F.when(F.lower(F.col("title")).rlike("(funny|comedy|laugh|humor)"), F.array(F.lit("comedy"))).otherwise(F.array()),
             F.when(F.lower(F.col("title")).rlike("(reaction|react|review)"), F.array(F.lit("reaction"))).otherwise(F.array()),
             
-            # Educational tagovi
             F.when(F.lower(F.col("title")).rlike("(tutorial|how to|guide|learn)"), F.array(F.lit("educational"))).otherwise(F.array()),
             F.when(F.lower(F.col("title")).rlike("(science|tech|technology)"), F.array(F.lit("tech"))).otherwise(F.array()),
             
-            # Lifestyle tagovi
             F.when(F.lower(F.col("title")).rlike("(vlog|daily|life|lifestyle)"), F.array(F.lit("lifestyle"))).otherwise(F.array()),
             F.when(F.lower(F.col("title")).rlike("(food|cooking|recipe)"), F.array(F.lit("food"))).otherwise(F.array()),
             
-            # Trend tagovi
             F.when(F.lower(F.col("title")).rlike("(viral|trending|popular|hot)"), F.array(F.lit("viral"))).otherwise(F.array()),
             F.when(F.lower(F.col("title")).rlike("(challenge|trend|meme)"), F.array(F.lit("challenge"))).otherwise(F.array())
         )))
@@ -191,7 +181,6 @@ def create_tag_intelligence_analysis(streaming_data, tag_intelligence, tag_pair_
                 print(f"Epoch {epoch_id}: Čekam streaming podatke...")
                 return
             
-            # Eksplodiranje tagova za real-time analizu
             exploded_streaming = streaming_df.select("*", F.explode("extracted_tags").alias("current_tag")) \
                 .filter(F.col("current_tag").isNotNull())
             
@@ -199,7 +188,6 @@ def create_tag_intelligence_analysis(streaming_data, tag_intelligence, tag_pair_
                 print("Nema detektovanih tagova u trenutnom batch-u")
                 return
             
-            # Real-time tag performanse
             streaming_tag_performance = exploded_streaming.groupBy(
                 F.window("stream_timestamp", "3 minutes"),
                 F.col("current_tag")
@@ -263,7 +251,6 @@ def create_tag_intelligence_analysis(streaming_data, tag_intelligence, tag_pair_
                         F.col("channels_using_tag").alias("Channels")
                     ).show(10, truncate=False)
             
-            # # Analiza tag strategija po kanalima
             channel_tag_strategy = streaming_df.groupBy(
                 F.window("stream_timestamp", "3 minutes"),
                 F.col("channel_title")
@@ -284,7 +271,6 @@ def create_tag_intelligence_analysis(streaming_data, tag_intelligence, tag_pair_
             ).filter(F.col("videos_posted") > 0)
             
             
-            # Kombinacije tagova (ako imamo podatke)
             if tag_pair_intelligence is not None:
                 tag_combinations_streaming = streaming_df.filter(F.col("tag_count") >= 2) \
                     .withColumn("tag_combinations", 

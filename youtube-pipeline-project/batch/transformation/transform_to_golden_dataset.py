@@ -12,7 +12,6 @@ region_map = {
 
 regions = list(region_map.keys())
 
-# ❌ OBRISANO: all_dataframes = []
 
 for i, region in enumerate(regions):
 
@@ -119,10 +118,8 @@ for i, region in enumerate(regions):
         .otherwise(col("tags_list"))
     )
 
-    # ✅ DODATO: smanji memory pressure
     processed_df = processed_df.repartition(2)
 
-    # ✅ KLJUČNO: write po regionu
     write_mode = "overwrite" if i == 0 else "append"
 
     processed_df.write \
@@ -130,7 +127,6 @@ for i, region in enumerate(regions):
         .format("parquet") \
         .save("hdfs://namenode:9000/storage/hdfs/processed/golden_dataset")
 
-# ❌ OBRISANO: union + final_df
 
 print("Processing completed successfully!")
 
