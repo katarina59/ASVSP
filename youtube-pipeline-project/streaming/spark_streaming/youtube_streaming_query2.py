@@ -21,7 +21,7 @@ KAFKA_TOPICS = {
 
 def create_spark_session():
     return SparkSession.builder \
-        .appName("YouTube-Advanced-Analytics") \
+        .appName("YouTube-Category-Performance-Analytics") \
         .config("spark.sql.adaptive.enabled", "true") \
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
