@@ -8,8 +8,8 @@ start_date = pendulum.datetime(2025, 8, 1, tz="UTC")
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
-    "retries": 3,
-    "retry_delay": timedelta(seconds=30),
+    "retries": 5,
+    "retry_delay": timedelta(seconds=60),
     'start_date': start_date,
 }
 

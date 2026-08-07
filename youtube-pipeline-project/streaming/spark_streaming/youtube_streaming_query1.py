@@ -29,9 +29,10 @@ def create_spark_session():
         .config("spark.sql.adaptive.enabled", "true") \
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
-        .config("spark.executor.memory", "4g") \
-        .config("spark.executor.cores", "2") \
-        .config("spark.executor.instances", "2") \
+        .config("spark.executor.memory", "2g") \
+        .config("spark.executor.cores", "1") \
+        .config("spark.executor.instances", "1") \
+        .config("spark.cores.max", "1") \
         .getOrCreate()
 
 trending_schema = StructType([
