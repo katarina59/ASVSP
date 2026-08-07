@@ -113,7 +113,7 @@ def create_kafka_stream(spark, topic, schema):
 def load_historical_categories(spark):
     return spark.read.jdbc(
         pg_url,
-        "query1_category_region_analysis", 
+        "batch_data_queries.query1_category_region_analysis",
         properties=pg_properties
     ).groupBy("category_title") \
         .agg(
@@ -127,7 +127,7 @@ def load_historical_categories(spark):
 def load_historical_engagement(spark):
     return spark.read.jdbc(
         pg_url,
-        "query2_channel_engagement",
+        "batch_data_queries.query2_channel_engagement",
         properties=pg_properties
     ).groupBy("category_title") \
         .agg(
@@ -236,11 +236,11 @@ def start_category_query(enriched_categories):
 
                 top_trending.write
                     .mode("append")
-                    .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query2/category_trending/stream_{epoch_id}"),
+                    .jdbc(pg_url, "real_time_data_queries.query2_category_trending_staging", properties=pg_properties),
 
                 perf_trending.write
                     .mode("append")
-                    .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query2/performance_vs_historical/stream_{epoch_id}")
+                    .jdbc(pg_url, "real_time_data_queries.query2_performance_vs_historical_staging", properties=pg_properties)
             )
         )(
             df.orderBy(F.desc("current_total_views"))

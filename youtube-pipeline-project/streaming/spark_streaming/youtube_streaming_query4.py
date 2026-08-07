@@ -6,6 +6,13 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 KAFKA_BROKERS = os.getenv("KAFKA_BROKERS", "kafka:9092")
 
+pg_url = "jdbc:postgresql://postgres:5432/airflow"
+pg_properties = {
+    "user": "airflow",
+    "password": "airflow",
+    "driver": "org.postgresql.Driver"
+}
+
 KAFKA_TOPICS = {
     "trending": "youtube_trending"
 }
@@ -268,9 +275,13 @@ def create_content_intelligence_analysis(streaming_data, channel_intelligence):
                     F.col("title_strategy_grade").alias("Title_Grade")
                 ).show(15, truncate=False)
             
-            combined_analysis.write \
+            combined_analysis \
+                .withColumn("window_start", F.col("window.start")) \
+                .withColumn("window_end", F.col("window.end")) \
+                .drop("window") \
+                .write \
                         .mode("append") \
-                        .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query4/stream_{epoch_id}")
+                        .jdbc(pg_url, "real_time_data_queries.query4_combined_analysis_staging", properties=pg_properties)
             
         except Exception as e:
             print(f" Error in content_intelligence_processor epoch {epoch_id}: {e}")

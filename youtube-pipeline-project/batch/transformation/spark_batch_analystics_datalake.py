@@ -1,9 +1,10 @@
 from pyspark.sql import SparkSession, Window
 from pyspark.sql.functions import (
     col, explode, coalesce, lag, trim, length, lower,
-    count, avg, round as spark_round, rank, asc, desc, 
-    sum as spark_sum, when, min as spark_min, countDistinct, 
-    datediff, percent_rank, concat, lit, row_number, monotonically_increasing_id
+    count, avg, round as spark_round, rank, asc, desc,
+    sum as spark_sum, when, min as spark_min, max as spark_max, countDistinct,
+    datediff, percent_rank, concat, lit, row_number, monotonically_increasing_id,
+    dayofweek, hour, to_timestamp, split as spark_split, size, greatest
 )
 from pyspark.sql.types import *
 from pyspark.storagelevel import StorageLevel
@@ -67,7 +68,7 @@ print(" TOP 15 rezultata UPIT 1:")
 query1_result.show(15, truncate=False)
 
 query1_result.write.mode("overwrite").jdbc(
-    pg_url, "query1_category_region_analysis", properties=pg_properties
+    pg_url, "batch_data_queries.query1_category_region_analysis", properties=pg_properties
 )
 
 
@@ -101,7 +102,7 @@ print(" TOP 25 rezultata UPIT 2:")
 query2_result.show(25, truncate=False)
 
 query2_result.write.mode("overwrite").jdbc(
-    pg_url, "query2_channel_engagement", properties=pg_properties
+    pg_url, "batch_data_queries.query2_channel_engagement", properties=pg_properties
 )
 
 
@@ -148,7 +149,7 @@ print(" Rezultati UPIT 3 - Zlatne kombinacije:")
 query3_result.show(20, truncate=False)
 
 query3_result.write.mode("overwrite").jdbc(
-    pg_url, "query3_viral_golden_combinations_proba", properties=pg_properties
+    pg_url, "batch_data_queries.query3_viral_golden_combinations_proba", properties=pg_properties
 )
 
 
@@ -196,7 +197,7 @@ query4_result = problem_agg.withColumn(
 query4_result.show(30, truncate=False)
 
 query4_result.write.mode("overwrite").jdbc(
-    pg_url, "query4_problem_analysis_proba_2", properties=pg_properties
+    pg_url, "batch_data_queries.query4_problem_analysis_proba_2", properties=pg_properties
 )
 
 
@@ -257,7 +258,7 @@ print(" TOP 30 tagova UPIT 5:")
 query5_result.show(30, truncate=False)
 
 query5_result.write.mode("overwrite").jdbc(
-    pg_url, "query5_tag_viral_analysis", properties=pg_properties
+    pg_url, "batch_data_queries.query5_tag_viral_analysis", properties=pg_properties
 )
 
 
@@ -349,7 +350,7 @@ print(" TOP 30 naprednih tag analiza UPIT 6:")
 query6_result.show(30, truncate=False)
 
 query6_result.write.mode("overwrite").jdbc(
-    pg_url, "query6_advanced_tag_recommendations", properties=pg_properties
+    pg_url, "batch_data_queries.query6_advanced_tag_recommendations", properties=pg_properties
 )
 
 
@@ -390,7 +391,7 @@ print(" TOP 20 najbrži viralni kanali UPIT 7:")
 query7_result.show(20, truncate=False)
 
 query7_result.write.mode("overwrite").jdbc(
-    pg_url, "query7_fastest_viral_channels", properties=pg_properties
+    pg_url, "batch_data_queries.query7_fastest_viral_channels", properties=pg_properties
 )
 
 
@@ -437,7 +438,7 @@ print(" Najbolje kombinacije opisa/thumbnail UPIT 8:")
 query8_result.show(40, truncate=False)
 
 query8_result.write.mode("overwrite").jdbc(
-    pg_url, "query8_content_optimization", properties=pg_properties
+    pg_url, "batch_data_queries.query8_content_optimization", properties=pg_properties
 )
 
 
@@ -509,7 +510,7 @@ print(" Optimalno vreme lansiranja UPIT 9:")
 query9_result.show(50, truncate=False)
 
 query9_result.write.mode("overwrite").jdbc(
-    pg_url, "query9_optimal_launch_timing", properties=pg_properties
+    pg_url, "batch_data_queries.query9_optimal_launch_timing", properties=pg_properties
 )
 
 
@@ -545,12 +546,235 @@ print(" TOP kanali sa najvećim hitovima UPIT 10:")
 query10_result.show(30, truncate=False)
 
 query10_result.write.mode("overwrite").jdbc(
-    pg_url, "query10_top_channels_mega_hits", properties=pg_properties
+    pg_url, "batch_data_queries.query10_top_channels_mega_hits", properties=pg_properties
+)
+
+
+# ============================================================
+# SHARED BASE za Q11, Q13, Q14 — persistence po videu
+# ============================================================
+
+print("\n Pripremam video_persistence_df (shared base za Q11, Q13, Q14)...")
+
+video_persistence_df = golden_df.groupBy(
+    "video_id", "video_title", "channel_title", "category_title", "region",
+    "publish_time", "thumbnail_link"
+).agg(
+    countDistinct("trending_full_date").alias("days_on_trending"),
+    spark_round(avg("views"), 0).alias("avg_views"),
+    spark_max("views").alias("max_views")
+).persist(StorageLevel.MEMORY_AND_DISK)
+
+video_persistence_df.count()
+
+
+# ============================================================
+# UPIT 11: Trending persistence po kanalu
+# — koliko dana (distinct trending datuma) kanali zadržavaju
+#   videe na trending listi, sortirano po kategoriji
+# ============================================================
+
+print("\n UPIT 11: Trending persistence po kanalu...")
+
+persistence_rank_window = Window.partitionBy("category_title").orderBy(desc("avg_days_on_trending"))
+
+query11_result = video_persistence_df.groupBy("channel_title", "category_title", "region").agg(
+    count("*").alias("total_videos"),
+    spark_round(avg("days_on_trending"), 2).alias("avg_days_on_trending"),
+    spark_max("days_on_trending").alias("max_days_on_trending"),
+    spark_sum("days_on_trending").alias("total_trending_days"),
+    spark_round(avg("avg_views"), 0).alias("avg_views")
+).withColumn(
+    "persistence_rank_in_category", rank().over(persistence_rank_window)
+).withColumn(
+    "persistence_tier",
+    when(col("avg_days_on_trending") >= 10, "LONG TERM DOMINANT")
+    .when(col("avg_days_on_trending") >= 5, "CONSISTENT")
+    .when(col("avg_days_on_trending") >= 2, "MODERATE")
+    .otherwise("FLASH TRENDING")
+).orderBy("category_title", "persistence_rank_in_category")
+
+print(" TOP rezultati UPIT 11 - Trending persistence:")
+query11_result.show(30, truncate=False)
+
+query11_result.write.mode("overwrite").jdbc(
+    pg_url, "batch_data_queries.query11_trending_persistence", properties=pg_properties
+)
+
+
+# ============================================================
+# UPIT 12: Tag cloud po regionu i kategoriji
+# — za svaku (category_title, region, tag) kombinaciju:
+#   prosečan broj pregleda, engagement score, broj videa
+#   (ulaz za Metabase tag cloud vizualizaciju u Koraku 3a)
+# ============================================================
+
+print("\n UPIT 12: Tag cloud po regionu i kategoriji...")
+
+tag_region_cat_rank_window = Window.partitionBy("category_title", "region").orderBy(desc("avg_views"))
+
+query12_result = tags_exploded.groupBy("category_title", "region", "tag").agg(
+    count("*").alias("video_count"),
+    spark_round(avg("views"), 0).alias("avg_views"),
+    spark_round(avg("likes"), 0).alias("avg_likes"),
+    spark_round(avg(col("likes") + col("comment_count")), 0).alias("avg_engagement"),
+    spark_round(
+        avg(col("likes") + col("comment_count")) /
+        greatest(avg("views"), lit(1)) * 100,
+        2
+    ).alias("engagement_rate_pct"),
+    spark_round(
+        count(when(col("likes") > 100000, 1)) * 100.0 / count("*"), 2
+    ).alias("viral_success_rate")
+).filter(
+    col("video_count") >= 3
+).withColumn(
+    "tag_rank_in_cat_region", rank().over(tag_region_cat_rank_window)
+).orderBy("category_title", "region", "tag_rank_in_cat_region")
+
+print(" Rezultati UPIT 12 - Tag cloud po regionu/kategoriji:")
+query12_result.show(30, truncate=False)
+
+query12_result.write.mode("overwrite").jdbc(
+    pg_url, "batch_data_queries.query12_tags_by_region_category", properties=pg_properties
+)
+
+
+# ============================================================
+# UPIT 13: Obrasci naslova i thumbnail za dugo-trending videe
+# — za videe koji ostaju 3+ dana na trending listi,
+#   analizira karakteristike naslova i thumbnail tipa
+#   po (category_title, region) kombinaciji
+#   (ulaz za Metabase analizu u Koraku 3b)
+# ============================================================
+
+print("\n UPIT 13: Obrasci naslova i thumbnail za dugo-trending videe...")
+
+title_features_df = video_persistence_df.filter(
+    col("video_title").isNotNull()
+).withColumn(
+    "title_length", length(col("video_title"))
+).withColumn(
+    "title_word_count", size(spark_split(trim(col("video_title")), "\\s+"))
+).withColumn(
+    "has_number", col("video_title").rlike("\\d+")
+).withColumn(
+    "has_brackets",
+    col("video_title").rlike("\\[|\\(|\\{")
+).withColumn(
+    "has_official",
+    lower(col("video_title")).rlike("official")
+).withColumn(
+    "has_feature",
+    lower(col("video_title")).rlike("ft\\.|feat\\.|featuring")
+).withColumn(
+    "has_mv",
+    lower(col("video_title")).rlike("m/v|\\bmv\\b|music video")
+).withColumn(
+    "title_length_category",
+    when(col("title_length") <= 30, "Short (<=30)")
+    .when(col("title_length") <= 60, "Medium (31-60)")
+    .when(col("title_length") <= 90, "Long (61-90)")
+    .otherwise("Very Long (>90)")
+).withColumn(
+    "thumbnail_type",
+    when(col("thumbnail_link").like("%maxresdefault%"), "High Quality")
+    .when(col("thumbnail_link").like("%hqdefault%"), "Medium Quality")
+    .otherwise("Standard Quality")
+)
+
+pattern_rank_window = Window.partitionBy("category_title", "region").orderBy(desc("avg_trending_days"))
+
+query13_result = title_features_df.filter(
+    col("days_on_trending") >= 3
+).groupBy(
+    "category_title", "region",
+    "has_number", "has_brackets", "has_official", "has_feature", "has_mv",
+    "title_length_category", "thumbnail_type"
+).agg(
+    count("*").alias("video_count"),
+    spark_round(avg("days_on_trending"), 2).alias("avg_trending_days"),
+    spark_max("days_on_trending").alias("max_trending_days"),
+    spark_round(avg("avg_views"), 0).alias("avg_views"),
+    spark_round(avg("title_length"), 1).alias("avg_title_length"),
+    spark_round(avg("title_word_count"), 1).alias("avg_word_count")
+).filter(
+    col("video_count") >= 3
+).withColumn(
+    "pattern_rank_in_cat_region", rank().over(pattern_rank_window)
+).orderBy("category_title", "region", "pattern_rank_in_cat_region")
+
+print(" Rezultati UPIT 13 - Obrasci naslova za dugo-trending videe:")
+query13_result.show(30, truncate=False)
+
+query13_result.write.mode("overwrite").jdbc(
+    pg_url, "batch_data_queries.query13_title_patterns", properties=pg_properties
+)
+
+
+# ============================================================
+# UPIT 14: Heatmapa dan u nedelji × sat objave
+# — za svaku (category_title, region, day_of_week, hour_of_day)
+#   kombinaciju: prosečan broj dana na trending listi i broj videa
+#   (ulaz za Metabase heatmapu u Koraku 4)
+# ============================================================
+
+print("\n UPIT 14: Heatmapa dan×sat objave → prosečan trending period...")
+
+heatmap_base_df = video_persistence_df.filter(
+    col("publish_time").isNotNull()
+).withColumn(
+    "publish_ts", to_timestamp(col("publish_time"))
+).filter(
+    col("publish_ts").isNotNull()
+).withColumn(
+    "day_of_week", dayofweek(col("publish_ts"))
+).withColumn(
+    "hour_of_day", hour(col("publish_ts"))
+).withColumn(
+    "day_name",
+    when(col("day_of_week") == 1, "Sunday")
+    .when(col("day_of_week") == 2, "Monday")
+    .when(col("day_of_week") == 3, "Tuesday")
+    .when(col("day_of_week") == 4, "Wednesday")
+    .when(col("day_of_week") == 5, "Thursday")
+    .when(col("day_of_week") == 6, "Friday")
+    .when(col("day_of_week") == 7, "Saturday")
+)
+
+heatmap_rank_window = Window.partitionBy("category_title", "region").orderBy(desc("avg_trending_days"))
+
+query14_result = heatmap_base_df.groupBy(
+    "category_title", "region", "day_of_week", "day_name", "hour_of_day"
+).agg(
+    count("*").alias("video_count"),
+    spark_round(avg("days_on_trending"), 2).alias("avg_trending_days"),
+    spark_max("days_on_trending").alias("max_trending_days"),
+    spark_round(avg("avg_views"), 0).alias("avg_views")
+).filter(
+    col("video_count") >= 5
+).withColumn(
+    "launch_recommendation",
+    when(col("avg_trending_days") >= 5, "OPTIMAL")
+    .when(col("avg_trending_days") >= 3, "GOOD")
+    .when(col("avg_trending_days") >= 2, "AVERAGE")
+    .otherwise("AVOID")
+).withColumn(
+    "slot_rank_in_cat_region", rank().over(heatmap_rank_window)
+).orderBy("category_title", "region", "day_of_week", "hour_of_day")
+
+print(" Rezultati UPIT 14 - Heatmapa dan×sat:")
+query14_result.show(50, truncate=False)
+
+query14_result.write.mode("overwrite").jdbc(
+    pg_url, "batch_data_queries.query14_publish_heatmap", properties=pg_properties
 )
 
 
 # CLEANUP
 
+tags_exploded.unpersist()
+video_persistence_df.unpersist()
 filtered_df.unpersist()
 golden_df.unpersist()
 

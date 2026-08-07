@@ -112,7 +112,7 @@ def create_kafka_stream(spark, topic, schema):
 
 def load_batch_context_data(spark):
     regional_performance = spark.read.jdbc(
-        pg_url, "query1_category_region_analysis", properties=pg_properties
+        pg_url, "batch_data_queries.query1_category_region_analysis", properties=pg_properties
     ).groupBy("category_title", "region").agg(
         F.avg("avg_views").alias("hist_avg_views"),
         F.avg("avg_comments").alias("hist_avg_comments"),
@@ -120,7 +120,7 @@ def load_batch_context_data(spark):
     )
     
     top_channels = spark.read.jdbc(
-        pg_url, "query2_channel_engagement", properties=pg_properties
+        pg_url, "batch_data_queries.query2_channel_engagement", properties=pg_properties
     ).filter(F.col("rank_in_category") <= 5).select(
         "category_title", "channel_title",
         "engagement_score", "avg_engagement_per_video", "rank_in_category"
@@ -163,10 +163,10 @@ def prepare_trending_data_enhanced(trending_basic):
         .when(F.length(F.col("description")) < 2000, "Long")
         .otherwise("Very Long").alias("description_category"),
         
-        F.when(F.col("view_count_parsed") >= 10000000, "Mega Hit (10M+)")
-        .when(F.col("view_count_parsed") >= 1000000, "Viral (1M+)")
-        .when(F.col("view_count_parsed") >= 100000, "Popular (100K+)")
-        .when(F.col("view_count_parsed") >= 10000, "Rising (10K+)")
+        F.when(F.regexp_replace(F.col("view_count"), "[^0-9]", "").cast("long") >= 10000000, "Mega Hit (10M+)")
+        .when(F.regexp_replace(F.col("view_count"), "[^0-9]", "").cast("long") >= 1000000, "Viral (1M+)")
+        .when(F.regexp_replace(F.col("view_count"), "[^0-9]", "").cast("long") >= 100000, "Popular (100K+)")
+        .when(F.regexp_replace(F.col("view_count"), "[^0-9]", "").cast("long") >= 10000, "Rising (10K+)")
         .otherwise("New/Small").alias("popularity_tier"),
         
         F.col("content_type")
@@ -255,7 +255,7 @@ def create_intelligent_trending_analysis_v2(trending_prepared, top_channels):
             top_trending.show(10, truncate=False)
             top_trending.write \
                     .mode("append") \
-                    .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query1/top_trending/stream_{epoch_id}")
+                    .jdbc(pg_url, "real_time_data_queries.query1_top_trending_staging", properties=pg_properties)
             
             viral_anomalies = df.filter(F.col("viral_anomaly_score") > 0.5) \
                 .orderBy(F.desc("viral_anomaly_score")) \
@@ -269,7 +269,7 @@ def create_intelligent_trending_analysis_v2(trending_prepared, top_channels):
             viral_anomalies.show(10, truncate=False)
             viral_anomalies.write \
                     .mode("append") \
-                    .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query1/viral_anomalies/stream_{epoch_id}")
+                    .jdbc(pg_url, "real_time_data_queries.query1_viral_anomalies_staging", properties=pg_properties)
             
         else:
             print(f"Epoch {epoch_id}: Waiting for trending data...")

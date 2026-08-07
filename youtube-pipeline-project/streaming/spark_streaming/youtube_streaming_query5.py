@@ -6,6 +6,13 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 KAFKA_BROKERS = os.getenv("KAFKA_BROKERS", "kafka:9092")
 
+pg_url = "jdbc:postgresql://postgres:5432/airflow"
+pg_properties = {
+    "user": "airflow",
+    "password": "airflow",
+    "driver": "org.postgresql.Driver"
+}
+
 KAFKA_TOPICS = {
     "trending": "youtube_trending"
 }
@@ -238,9 +245,13 @@ def create_tag_intelligence_analysis(streaming_data, tag_intelligence, tag_pair_
                         F.col("channels_using_tag").alias("Channels")
                     ).show(12, truncate=False)
 
-                historical_comparison.write \
+                historical_comparison \
+                .withColumn("window_start", F.col("window.start")) \
+                .withColumn("window_end", F.col("window.end")) \
+                .drop("window") \
+                .write \
                 .mode("append") \
-                .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query5/stream_{epoch_id}")
+                .jdbc(pg_url, "real_time_data_queries.query5_historical_comparison_staging", properties=pg_properties)
             else:
                 streaming_tag_performance.orderBy(F.desc("tag_momentum_score")) \
                     .select(
@@ -294,9 +305,13 @@ def create_tag_intelligence_analysis(streaming_data, tag_intelligence, tag_pair_
                             F.col("combo_usage").alias("Usage")
                         ).show(8, truncate=False)
                     
-                    tag_combinations_streaming.write \
+                    tag_combinations_streaming \
+                        .withColumn("window_start", F.col("window.start")) \
+                        .withColumn("window_end", F.col("window.end")) \
+                        .drop("window") \
+                        .write \
                         .mode("append") \
-                        .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query5/top_tag_comb/stream_{epoch_id}")
+                        .jdbc(pg_url, "real_time_data_queries.query5_top_tag_combinations_staging", properties=pg_properties)
             
             
         except Exception as e:

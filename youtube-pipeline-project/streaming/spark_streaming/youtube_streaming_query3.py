@@ -6,6 +6,13 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 KAFKA_BROKERS = os.getenv("KAFKA_BROKERS", "kafka:9092")
 
+pg_url = "jdbc:postgresql://postgres:5432/airflow"
+pg_properties = {
+    "user": "airflow",
+    "password": "airflow",
+    "driver": "org.postgresql.Driver"
+}
+
 KAFKA_TOPICS = {
     "trending": "youtube_trending"
 }
@@ -232,7 +239,7 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
 
             top_performers.write \
                         .mode("append") \
-                        .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query3/top_performers/stream_{epoch_id}")
+                        .jdbc(pg_url, "real_time_data_queries.query3_top_performers_staging", properties=pg_properties)
             
             viral_channels = enriched_with_history.filter(F.col("viral_anomaly_score") >= 1.5) \
                 .orderBy(F.desc("viral_anomaly_score")) \
@@ -282,7 +289,7 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
 
             category_comparison.write \
                         .mode("append") \
-                        .parquet(f"hdfs://namenode:9000/storage/hdfs/results/query3/category_comparison/stream_{epoch_id}")
+                        .jdbc(pg_url, "real_time_data_queries.query3_category_comparison_staging", properties=pg_properties)
             
             print("="*150)
             
