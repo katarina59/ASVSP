@@ -35,6 +35,11 @@ with DAG(
     start_date=start_date,
 ) as dag:
 
+    ensure_captured_at = BashOperator(
+        task_id="ensure_captured_at",
+        bash_command="docker exec -i postgres psql -U airflow -d airflow < /opt/airflow/sql/add_realtime_captured_at.sql",
+    )
+
     run_near_realtime_query = BashOperator(
         task_id="run_near_realtime_query",
         bash_command="""
@@ -44,7 +49,7 @@ with DAG(
             docker exec -d spark-master /spark/bin/spark-submit \
                 --master spark://spark-master:7077 \
                 --deploy-mode client \
-                --driver-memory 2g \
+                --driver-memory 768m \
                 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.postgresql:postgresql:42.7.6 \
                 /opt/spark_apps/youtube_streaming_query1.py
             echo "near_realtime_query1: Spark job pokrenut"
@@ -57,4 +62,4 @@ with DAG(
         bash_command=f'docker exec postgres psql -U airflow -d airflow -c "{MOVE_STAGING_SQL}"',
     )
 
-    run_near_realtime_query >> persist_results
+    ensure_captured_at >> run_near_realtime_query >> persist_results

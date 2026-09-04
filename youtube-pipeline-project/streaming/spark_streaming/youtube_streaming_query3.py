@@ -233,7 +233,8 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
                     F.round("viral_anomaly_score", 2).alias("anomaly_x"),
                     "performance_vs_history",
                     "growth_indicator",
-                    "channel_tier"
+                    "channel_tier",
+                    F.current_timestamp().alias("captured_at")
                 )
             top_performers.show(12, truncate=False)
 
@@ -287,7 +288,7 @@ def create_enriched_stream_batch_analysis(streaming_data, channel_analytics, cat
                 "category_performance_vs_batch"
             ).orderBy(F.desc("streaming_channels")).show(8, truncate=False)
 
-            category_comparison.write \
+            category_comparison.withColumn("captured_at", F.current_timestamp()).write \
                         .mode("append") \
                         .jdbc(pg_url, "real_time_data_queries.query3_category_comparison_staging", properties=pg_properties)
             

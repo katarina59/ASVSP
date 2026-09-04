@@ -44,6 +44,7 @@ with DAG(
             docker exec -d spark-master /spark/bin/spark-submit \
                 --master spark://spark-master:7077 \
                 --deploy-mode client \
+                --driver-memory 768m \
                 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.postgresql:postgresql:42.7.6 \
                 /opt/spark_apps/youtube_streaming_query4.py
             echo "near_realtime_query4: Spark job pokrenut"

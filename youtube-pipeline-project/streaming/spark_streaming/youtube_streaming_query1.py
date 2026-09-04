@@ -29,7 +29,7 @@ def create_spark_session():
         .config("spark.sql.adaptive.enabled", "true") \
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
-        .config("spark.executor.memory", "2g") \
+        .config("spark.executor.memory", "1g") \
         .config("spark.executor.cores", "1") \
         .config("spark.executor.instances", "1") \
         .config("spark.cores.max", "1") \
@@ -261,10 +261,11 @@ def create_intelligent_trending_analysis_v2(trending_prepared, top_channels):
             viral_anomalies = df.filter(F.col("viral_anomaly_score") > 0.5) \
                 .orderBy(F.desc("viral_anomaly_score")) \
                 .select(
-                    "channel_title", "trending_videos_count", 
+                    "channel_title", "trending_videos_count",
                     F.round("avg_views_per_video", 0).alias("avg_views"),
                     F.round("viral_anomaly_score", 2).alias("anomaly_score"),
-                    "popularity_tier"
+                    "popularity_tier",
+                    F.current_timestamp().alias("captured_at")
                 )
             
             viral_anomalies.show(10, truncate=False)

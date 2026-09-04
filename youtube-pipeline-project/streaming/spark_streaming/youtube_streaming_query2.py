@@ -266,9 +266,10 @@ def start_category_query(enriched_categories):
               .select(
                   "category",
                   "views_performance_vs_historical",
-                  "engagement_performance_vs_historical", 
+                  "engagement_performance_vs_historical",
                   "current_total_views",
-                  "category_trend_indicator"
+                  "category_trend_indicator",
+                  F.current_timestamp().alias("captured_at")
               )
               .orderBy(F.desc("views_performance_vs_historical"))
         ))
