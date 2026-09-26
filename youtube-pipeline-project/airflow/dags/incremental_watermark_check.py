@@ -17,8 +17,6 @@ default_args = {
     "start_date": start_date,
 }
 
-# Ista dd.MM.yy -> date logika kao u transform_data_common.py, prevedena u SQL,
-# da bi filter_new_data mogao da proveri ima li novih redova bez pokretanja Sparka.
 NEW_ROWS_COUNT_SQL = (
     "SELECT COUNT(*) FROM sink_data.sink_videos "
     "WHERE to_date("
@@ -80,10 +78,10 @@ with DAG(
             "/spark/bin/spark-submit "
             "--master spark://spark-master:7077 "
             "--deploy-mode client "
-            "--executor-memory 2G "
+            "--executor-memory 3G "
             "--driver-memory 2G "
-            "--conf spark.executor.memoryOverhead=512m "
-            "--conf spark.sql.shuffle.partitions=2 "
+            "--conf spark.executor.memoryOverhead=768m "
+            "--conf spark.sql.shuffle.partitions=8 "
             "--conf spark.executor.cores=1 "
             "--packages org.postgresql:postgresql:42.7.6 "
             "--py-files /opt/airflow/jobs/transformation/transform_data_common.py "

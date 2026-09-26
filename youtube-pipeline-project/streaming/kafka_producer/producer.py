@@ -4,7 +4,7 @@ import logging
 import requests  # type: ignore
 import os
 from kafka import KafkaProducer  # type: ignore
-from kafka.errors import NoBrokersAvailable, KafkaConnectionError  # type: ignore
+from kafka.errors import KafkaConnectionError  # type: ignore
 from requests.exceptions import RequestException  # type: ignore
 
 RAPIDAPI_KEY = "78b700219bmshbcb74a76fc2570bp10d1b1jsne61961cc2f3d"
@@ -50,7 +50,7 @@ class YouTubeKafkaProducer:
                 )
                 logging.info("Uspešno povezano na Kafka!")
                 return producer
-            except (NoBrokersAvailable, KafkaConnectionError) as e:
+            except KafkaConnectionError as e:
                 logging.warning(f"Neuspešan pokušaj {attempt}/{retries}: {e}")
                 if attempt < retries:
                     logging.info(f"Čekam {RETRY_DELAY} sekundi pre sledećeg pokušaja...")
@@ -108,24 +108,19 @@ class YouTubeKafkaProducer:
         logging.info(f"Poslato {len(items)} stavki u topic '{topic}'")
 
 
-
-    # 1. TRENDING VIDEOS
     def fetch_trending_videos(self):
         data = self.make_api_request("trending")
         if data:
             self.send_to_kafka(TOPICS["trending"], data)
     
-    # 2. VIDEO COMMENTS
     def fetch_video_comments(self, video_id):
         data = self.make_api_request("comments", {"id": video_id})
         if data:
-            # Dodaj video_id u svaki komentar
             if "data" in data:
                 for comment in data["data"]:
                     comment["video_id"] = video_id
             self.send_to_kafka(TOPICS["comments"], data)
     
-    # 3. VIDEO DETAILS
     def fetch_video_details(self, video_id):
         data = self.make_api_request("video/info", {"id": video_id})
         if data:

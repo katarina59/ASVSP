@@ -80,7 +80,6 @@ def load_content_intelligence_dataset(spark):
     try:
         golden_df = spark.read.format("parquet").load("hdfs://namenode:9000/storage/hdfs/processed/golden_dataset")
         
-        # Channel Intelligence Analysis
         channel_intelligence = golden_df.groupBy("category_title", "region", "channel_title").agg(
             F.count("*").alias("videos_count"),
             F.avg("views").alias("channel_avg_views"),

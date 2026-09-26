@@ -13,9 +13,6 @@ default_args = {
     'start_date': start_date,
 }
 
-# Tabele (real_time_data_queries šema) koje ovaj near-real-time upit puni.
-# Streaming job piše u "<tabela>_staging" (foreachBatch, append); persist_results
-# ih premešta u finalnu tabelu koju čita Metabase.
 RESULT_TABLES = ["query3_top_performers", "query3_category_comparison"]
 
 MOVE_STAGING_SQL = " ".join(

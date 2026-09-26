@@ -129,15 +129,15 @@ services:
       retries: 10
       start_period: 45s
   
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    ports:
-      - 8180:8080
-    environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-    networks:
-      - kafka-network
+  # kafka-ui:
+  #   image: provectuslabs/kafka-ui:latest
+  #   ports:
+  #     - 8180:8080
+  #   environment:
+  #     KAFKA_CLUSTERS_0_NAME: local
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+  #   networks:
+  #     - kafka-network
 
   
 
@@ -294,6 +294,7 @@ services:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode1
     hostname: datanode1
+    restart: unless-stopped
     environment:
       SERVICE_PRECONDITION: "namenode:9870"
     volumes:
@@ -352,24 +353,24 @@ services:
       retries: 5
       start_period: 10s
 
-  cloudera:
-    image: gethue/hue:20201111-135001
-    platform: linux/amd64
-    hostname: hue
-    container_name: hue
-    dns: 8.8.8.8
-    ports:
-      - "8085:8888"
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
-    volumes:
-      - ./conf.dist:/usr/share/hue/desktop/conf
-    depends_on: 
-      - namenode
-    networks:
-      - kafka-network
+  # cloudera:
+  #   image: gethue/hue:20201111-135001
+  #   platform: linux/amd64
+  #   hostname: hue
+  #   container_name: hue
+  #   dns: 8.8.8.8
+  #   ports:
+  #     - "8085:8888"
+  #   ulimits:
+  #     nofile:
+  #       soft: 65536
+  #       hard: 65536
+  #   volumes:
+  #     - ./conf.dist:/usr/share/hue/desktop/conf
+  #   depends_on: 
+  #     - namenode
+  #   networks:
+  #     - kafka-network
 
 
 volumes:

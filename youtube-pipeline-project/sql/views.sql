@@ -1,13 +1,3 @@
--- Kontekst batch podataka za near-real-time Metabase vizualizaciju.
--- Spaja real-time rezultat (kanal trenutno na trending listi) sa batch istorijskim
--- angažmanom istog kanala, da se real-time rezultat prikazuje u širem kontekstu
--- istorijskih (batch) podataka, a ne izolovano (zahtev iz Big_Data_Architecture dokumenta).
---
--- NAPOMENA: ovaj fajl treba pokrenuti TEK nakon što su oba izvora bar jednom napunjena
--- (DAG-ovi batch_query i near_realtime_query1), jer CREATE VIEW zahteva da referencirane
--- tabele već postoje. Isti obrazac (join na channel_title/category_title) treba ponoviti
--- za query2-5 po potrebi, u zavisnosti od toga koje kolone ti upiti imaju.
-
 CREATE OR REPLACE VIEW real_time_data_queries.query1_top_trending_with_context AS
 SELECT
     rt.start,

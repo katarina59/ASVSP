@@ -10,17 +10,6 @@ region_map = {
 
 
 def clean_and_enrich(df, region=None):
-    """Zajednička transformaciona/enrichment logika za golden dataset.
-
-    Ulazni df mora imati kolone: video_id, video_title, channel_title, publish_time,
-    views, likes, dislikes, comment_count, category_id, category_title, assignable,
-    tags_list (array<string>), thumbnail_link, comments_disabled, ratings_disabled,
-    video_error_or_removed, trending_date, description, region.
-
-    Ovu funkciju poziva i transform_data.py --mode initial (DAG1 task transform_data)
-    i transform_data.py --mode incremental (DAG3 task trigger_transform_data), čime
-    se izbegava dupliranje logike na dva mesta.
-    """
 
     split_date = spark_split(col("trending_date"), "\\.")
 

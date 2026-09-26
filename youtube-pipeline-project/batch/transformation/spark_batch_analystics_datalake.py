@@ -550,11 +550,7 @@ query10_result.write.mode("overwrite").jdbc(
 )
 
 
-# ============================================================
 # SHARED BASE za Q11, Q13, Q14 — persistence po videu
-# ============================================================
-
-print("\n Pripremam video_persistence_df (shared base za Q11, Q13, Q14)...")
 
 video_persistence_df = golden_df.groupBy(
     "video_id", "video_title", "channel_title", "category_title", "region",
@@ -568,11 +564,7 @@ video_persistence_df = golden_df.groupBy(
 video_persistence_df.count()
 
 
-# ============================================================
-# UPIT 11: Trending persistence po kanalu
-# — koliko dana (distinct trending datuma) kanali zadržavaju
-#   videe na trending listi, sortirano po kategoriji
-# ============================================================
+# UPIT 11
 
 print("\n UPIT 11: Trending persistence po kanalu...")
 
@@ -602,12 +594,7 @@ query11_result.write.mode("overwrite").jdbc(
 )
 
 
-# ============================================================
-# UPIT 12: Tag cloud po regionu i kategoriji
-# — za svaku (category_title, region, tag) kombinaciju:
-#   prosečan broj pregleda, engagement score, broj videa
-#   (ulaz za Metabase tag cloud vizualizaciju u Koraku 3a)
-# ============================================================
+# UPIT 12
 
 print("\n UPIT 12: Tag cloud po regionu i kategoriji...")
 
@@ -639,14 +626,7 @@ query12_result.write.mode("overwrite").jdbc(
     pg_url, "batch_data_queries.query12_tags_by_region_category", properties=pg_properties
 )
 
-
-# ============================================================
-# UPIT 13: Obrasci naslova i thumbnail za dugo-trending videe
-# — za videe koji ostaju 3+ dana na trending listi,
-#   analizira karakteristike naslova i thumbnail tipa
-#   po (category_title, region) kombinaciji
-#   (ulaz za Metabase analizu u Koraku 3b)
-# ============================================================
+# UPIT 13
 
 print("\n UPIT 13: Obrasci naslova i thumbnail za dugo-trending videe...")
 
@@ -712,14 +692,9 @@ query13_result.write.mode("overwrite").jdbc(
 )
 
 
-# ============================================================
-# UPIT 14: Heatmapa dan u nedelji × sat objave
-# — za svaku (category_title, region, day_of_week, hour_of_day)
-#   kombinaciju: prosečan broj dana na trending listi i broj videa
-#   (ulaz za Metabase heatmapu u Koraku 4)
-# ============================================================
+# UPIT 14
 
-print("\n UPIT 14: Heatmapa dan×sat objave → prosečan trending period...")
+print("\n UPIT 14: Dan×sat objave → prosečan trending period...")
 
 heatmap_base_df = video_persistence_df.filter(
     col("publish_time").isNotNull()

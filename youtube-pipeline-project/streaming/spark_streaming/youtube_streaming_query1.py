@@ -17,7 +17,6 @@ pg_properties = {
 }
 
 
-# Kafka topics iz producer-a
 KAFKA_TOPICS = {
     "trending": "youtube_trending"
 }

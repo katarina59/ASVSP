@@ -28,7 +28,6 @@ def tags_string_to_list(tags_col):
 
 
 def run_initial(spark):
-    """DAG1 task 'transform_data': čita CSV/JSON iz Zone1 (Z1, bez AVRO), gradi golden dataset u Zone2 (Z2)."""
 
     regions = list(region_map.keys())
 
@@ -85,8 +84,6 @@ def run_initial(spark):
 
 
 def run_incremental(spark, watermark):
-    """DAG3 task 'trigger_transform_data': čita sink_data iznad watermarka, poziva ISTU
-    clean_and_enrich funkciju kao initial mod, radi anti-join dedup i append u golden dataset."""
 
     sink_df = spark.read.jdbc(pg_url, "sink_data.sink_videos", properties=pg_properties)
 

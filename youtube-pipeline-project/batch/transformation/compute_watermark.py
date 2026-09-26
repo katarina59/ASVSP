@@ -12,8 +12,6 @@ def main():
 
     spark.stop()
 
-    # Poslednja linija stdout-a mora biti tačno ovo - Airflow BashOperator je
-    # kroz "| tail -n 1" koristi kao XCom vrednost za downstream taskove.
     print(f"WATERMARK={watermark}")
 
 

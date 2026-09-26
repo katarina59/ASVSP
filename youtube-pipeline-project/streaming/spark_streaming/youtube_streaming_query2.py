@@ -161,17 +161,6 @@ def calculate_current_category_performance(video_details_basic):
         )
 
 
-def start_debug_stream(category_performance):
-    def debug_categories(df, epoch_id):
-        df.select("category").distinct().show(truncate=False)
-
-    return category_performance.writeStream \
-        .outputMode("update") \
-        .trigger(processingTime='60 seconds') \
-        .foreachBatch(debug_categories) \
-        .option("checkpointLocation", "hdfs://namenode:9000/storage/hdfs/checkpoint/query2") \
-        .start()
-
 def enrich_with_historical(category_performance, historical_categories, historical_engagement_by_cat):
     return category_performance.alias("current") \
         .join(
@@ -273,6 +262,7 @@ def start_category_query(enriched_categories):
               )
               .orderBy(F.desc("views_performance_vs_historical"))
         ))
+        .option("checkpointLocation", "hdfs://namenode:9000/storage/hdfs/checkpoint/query2")
         .start()
     )
 
